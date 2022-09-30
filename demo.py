@@ -92,10 +92,11 @@ def retrieval():
 	# read image database
 	database = sorted(glob(database_dir + "/*.jpg"))
  
-	# initialize array with 10 zeros
-	min_diffs = [99999999] * 10
+	# initialize arrays for fixed size of 10
+	min_diffs = [99999999.0] * 10
 	closest_imgs = [0] * 10
-	# index of max value within min_diffs array (value will be replace -> array contains just the min diffs)
+	result = [0] * 10
+	# initialize maxVal
 	maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	for img in database:
 		# read image
@@ -108,20 +109,20 @@ def retrieval():
 		# diff = compareImgs_hist(src_gray, img_gray)
 		print(img, diff)
 		# find the minimum difference
-		#if diff <= min_diff:
 		if diff <= maxVal:
 			# update the minimum difference
-			maxVal = diff
+			min_diffs[maxValIdx] = diff
 			# update the most similar image
 			closest_imgs[maxValIdx] = img_rgb
-			result = img
-	
-	#print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result, min_diff))
-	print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result, maxVal))
-	print("\n")
+			result[maxValIdx] = img
+			# update max difference in min_diffs array
+			maxValIdx, maxVal = checkMaxDifference(min_diffs)
 
-	#cv.imshow("Result1", closest_imgs[0])
-	cv.imshow("Result", closest_imgs[1])
+	j=0
+	for img in closest_imgs:
+		print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
+		cv.imshow("Result " + str(j), closest_imgs[j])
+		j+=1
 	cv.waitKey(0)
 	cv.destroyAllWindows()
 
