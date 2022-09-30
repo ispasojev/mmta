@@ -4,6 +4,7 @@ from glob import glob
 
 # the directory of the image database
 database_dir = "image.orig"
+numRetrievedImg = 10
 
 # Compute pixel-by-pixel difference and return the sum
 def compareImgs(img1, img2):
@@ -92,10 +93,10 @@ def retrieval():
 	# read image database
 	database = sorted(glob(database_dir + "/*.jpg"))
  
-	# initialize arrays for fixed size of 10
-	min_diffs = [99999999.0] * 10
-	closest_imgs = [0] * 10
-	result = [0] * 10
+	# initialize arrays for fixed size of numRetrievedImg
+	min_diffs = [99999999.0] * numRetrievedImg
+	closest_imgs = [0] * numRetrievedImg
+	result = [0] * numRetrievedImg
 	# initialize maxVal
 	maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	for img in database:
