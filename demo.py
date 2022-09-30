@@ -36,6 +36,19 @@ def compareImgs_hist(img1, img2):
 		sum += abs(hist1[i] - hist2[i])
 	return sum / float(width * height)
 
+def checkMaxDifference(diffs):
+    maxValIdx = 0 
+    maxVal = diffs[maxValIdx]
+    i = 0
+    for current in diffs:
+        # if current bigger than/equals maxVal -> replace 
+        if current >= maxVal:
+            maxVal = current
+            maxValIdx = i
+        i +=1
+    return maxValIdx, maxVal
+    
+
 def retrieval():
 	print("1: beach")
 	print("2: building")
@@ -78,8 +91,12 @@ def retrieval():
 
 	# read image database
 	database = sorted(glob(database_dir + "/*.jpg"))
-
-
+ 
+	# initialize array with 10 zeros
+	min_diffs = [99999999] * 10
+	closest_imgs = [0] * 10
+	# index of max value within min_diffs array (value will be replace -> array contains just the min diffs)
+	maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	for img in database:
 		# read image
 		img_rgb = cv.imread(img)
@@ -91,17 +108,20 @@ def retrieval():
 		# diff = compareImgs_hist(src_gray, img_gray)
 		print(img, diff)
 		# find the minimum difference
-		if diff <= min_diff:
+		#if diff <= min_diff:
+		if diff <= maxVal:
 			# update the minimum difference
-			min_diff = diff
+			maxVal = diff
 			# update the most similar image
-			closest_img = img_rgb
+			closest_imgs[maxValIdx] = img_rgb
 			result = img
 	
-	print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result, min_diff))
+	#print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result, min_diff))
+	print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result, maxVal))
 	print("\n")
 
-	cv.imshow("Result", closest_img)
+	#cv.imshow("Result1", closest_imgs[0])
+	cv.imshow("Result", closest_imgs[1])
 	cv.waitKey(0)
 	cv.destroyAllWindows()
 
