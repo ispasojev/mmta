@@ -94,7 +94,7 @@ def retrieval():
 	database = sorted(glob(database_dir + "/*.jpg"))
  
 	# initialize arrays for fixed size of numRetrievedImg
-	min_diffs = [99999999.0] * numRetrievedImg
+	min_diffs = [999999999.0] * numRetrievedImg
 	closest_imgs = [0] * numRetrievedImg
 	result = [0] * numRetrievedImg
 	# initialize maxVal
