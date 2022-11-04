@@ -1,10 +1,11 @@
+from collections import Counter
+import sys
 import cv2 as cv
 import numpy as np
 from glob import glob
 
 # the directory of the image database
 database_dir = "image.orig"
-numRetrievedImg = 10
 
 # Compute pixel-by-pixel difference and return the sum
 def compareImgs(img1, img2):
@@ -37,18 +38,120 @@ def compareImgs_hist(img1, img2):
 		sum += abs(hist1[i] - hist2[i])
 	return sum / float(width * height)
 
-def checkMaxDifference(diffs):
-    maxValIdx = 0 
-    maxVal = diffs[maxValIdx]
-    i = 0
-    for current in diffs:
-        # if current bigger than/equals maxVal -> replace 
-        if current >= maxVal:
-            maxVal = current
-            maxValIdx = i
-        i +=1
-    return maxValIdx, maxVal
-    
+
+class BackgroundColorDetector_dinosaur():
+	# https://medium.com/generalist-dev/background-colour-detection-using-opencv-and-python-22ed8655b243 
+
+	def __init__(self, imageLoc):
+		self.img = cv.imread(imageLoc, 1)
+		self.manual_count = {}
+		self.w, self.h, self.channels = self.img.shape
+		self.total_pixels = self.w*self.h
+
+	def count(self):
+		for y in range(0, self.h):
+			for x in range(0, self.w):
+				RGB = (self.img[x, y, 2], self.img[x, y, 1], self.img[x, y, 0])
+				if RGB in self.manual_count:
+					self.manual_count[RGB] += 1
+				else:
+					self.manual_count[RGB] = 1
+
+	def average_colour(self,i):
+		red = 0
+		green = 0
+		blue = 0
+		sample = 10
+		for top in range(0, sample):
+			red += self.number_counter[top][0][0]
+			green += self.number_counter[top][0][1]
+			blue += self.number_counter[top][0][2]
+
+		average_red = red / sample
+		average_green = green / sample
+		average_blue = blue / sample
+		# print("Average RGB for top ten is: (", average_red, ", ", average_green, ", ", average_blue, ")")
+		if average_blue >225 and average_green >225 and average_red>225:
+			print(str(i) + ".jpg IS MATCHED!")
+			if i<500 and i>399:
+				print("@@@@@ This IS Correct Dinosaur Picture !")
+		
+
+	def twenty_most_common(self):
+		self.count()
+		self.number_counter = Counter(self.manual_count).most_common(20) #### 20->10
+		# for rgb, value in self.number_counter:
+		# 	print(rgb, value, ((float(value)/self.total_pixels)*100))
+
+	def detect(self,i):
+		self.twenty_most_common()
+		self.percentage_of_first = (
+			float(self.number_counter[0][1])/self.total_pixels)
+		# print(self.percentage_of_first)
+		if self.percentage_of_first > 0.5:
+			print("Background color is ", self.number_counter[0][0])
+			
+		else:
+			self.average_colour(i)
+
+
+class BackgroundColorDetector_horse():
+	# https://medium.com/generalist-dev/background-colour-detection-using-opencv-and-python-22ed8655b243 
+
+	def __init__(self, imageLoc):
+		self.img = cv.imread(imageLoc, 1)
+		self.manual_count = {}
+		self.w, self.h, self.channels = self.img.shape
+		self.total_pixels = self.w*self.h
+
+	def count(self):
+		for y in range(0, self.h):
+			for x in range(0, self.w):
+				RGB = (self.img[x, y, 2], self.img[x, y, 1], self.img[x, y, 0])
+				if RGB in self.manual_count:
+					self.manual_count[RGB] += 1
+				else:
+					self.manual_count[RGB] = 1
+
+	def average_colour(self,i):
+		red = 0
+		green = 0
+		blue = 0
+		sample = 10
+		for top in range(0, sample):
+			red += self.number_counter[top][0][0]
+			green += self.number_counter[top][0][1]
+			blue += self.number_counter[top][0][2]
+
+		average_red = red / sample
+		average_green = green / sample
+		average_blue = blue / sample
+		print("Average RGB for top ten is: (", average_red, ", ", average_green, ", ", average_blue, ")")
+		# if average_blue >225 and average_green >225 and average_red>225:
+		# 	print(str(i) + ".jpg IS MATCHED!")
+		# 	if i<500 and i>399:
+		# 		print("@@@@@ This IS Correct Dinosaur Picture !")
+		
+
+	def twenty_most_common(self):
+		self.count()
+		self.number_counter = Counter(self.manual_count).most_common(20) #### 20->10
+		# for rgb, value in self.number_counter:
+		# 	print(rgb, value, ((float(value)/self.total_pixels)*100))
+
+	def detect(self,i):
+		self.twenty_most_common()
+		self.percentage_of_first = (
+			float(self.number_counter[0][1])/self.total_pixels)
+		# print(self.percentage_of_first)
+		if self.percentage_of_first > 0.5:
+			print("Background color is ", self.number_counter[0][0])
+			
+		else:
+			self.average_colour(i)
+
+
+	
 
 def retrieval():
 	print("1: beach")
@@ -92,13 +195,8 @@ def retrieval():
 
 	# read image database
 	database = sorted(glob(database_dir + "/*.jpg"))
- 
-	# initialize arrays for fixed size of numRetrievedImg
-	min_diffs = [999999999.0] * numRetrievedImg
-	closest_imgs = [0] * numRetrievedImg
-	result = [0] * numRetrievedImg
-	# initialize maxVal
-	maxValIdx, maxVal = checkMaxDifference(min_diffs)
+
+
 	for img in database:
 		# read image
 		img_rgb = cv.imread(img)
@@ -110,20 +208,17 @@ def retrieval():
 		# diff = compareImgs_hist(src_gray, img_gray)
 		print(img, diff)
 		# find the minimum difference
-		if diff <= maxVal:
+		if diff <= min_diff:
 			# update the minimum difference
-			min_diffs[maxValIdx] = diff
+			min_diff = diff
 			# update the most similar image
-			closest_imgs[maxValIdx] = img_rgb
-			result[maxValIdx] = img
-			# update max difference in min_diffs array
-			maxValIdx, maxVal = checkMaxDifference(min_diffs)
+			closest_img = img_rgb
+			result = img
+	
+	print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result, min_diff))
+	print("\n")
 
-	j=0
-	for img in closest_imgs:
-		print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
-		cv.imshow("Result " + str(j), closest_imgs[j])
-		j+=1
+	cv.imshow("Result", closest_img)
 	cv.waitKey(0)
 	cv.destroyAllWindows()
 
@@ -177,10 +272,42 @@ def main():
 	if number == 1:
 		retrieval()
 	elif number == 2:
-		SIFT()
+		# SIFT()
 		# pass
+		print("1: dinosaur")
+		print("2: horse")
+		print("3: beach")
+		number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
+		if number == 1:
+			# Presicion = 79/92 = 85.9%
+			# recall = 79 / 100 = 79%
+			for i in range(1000):
+				y= str(i)
+				BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
+				# print("Image Number is: "+y+".jpg  ")
+				BackgroundColor.detect(i)
+		elif number == 2:
+			# Presicion = 
+			# recall = 
+			for i in range(700,800):
+				y= str(i)
+				BackgroundColor = BackgroundColorDetector_horse("image.orig/"+y+".jpg")
+				print("Image Number is: "+y+".jpg  ")
+				BackgroundColor.detect(i)
+		elif number == 3:
+			BackgroundColor = BackgroundColorDetector_dinosaur(sys.argv[0])
+			BackgroundColor.detect()
 	else:
 		print("Invalid input")
 		exit()
+
+	# if (len(sys.argv) != 2):
+	# 	print("ERROR: syntax is 'python main.py /example/image/location.jpg'")
+	# else: 
+	# 	BackgroundColor = BackgroundColorDetector(sys.argv[1])
+	# 	BackgroundColor.detect()
+
+	# self = cv.imread("image.orig/685.jpg")
+	# detect("image.orig/685.jpg")
 
 main()
