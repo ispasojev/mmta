@@ -129,11 +129,11 @@ def retrieval(retrieval_amount):
 		chosenCategory = 5
 		src_input = cv.imread("dinosaur.jpg")
 		print("You choose: %s - dinosaur\n" % choice)
-		for i in range(1000):
-				y= str(i)
-				BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
-				# print("Image Number is: "+y+".jpg  ")
-				BackgroundColor.detect(i)
+		# for i in range(1000):
+		# 		y= str(i)
+		# 		BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
+		# 		# print("Image Number is: "+y+".jpg  ")
+		# 		BackgroundColor.detect(i)
 	if choice == '5':
 		chosenCategory = 7
 		src_input = cv.imread("flower.jpg")
@@ -190,10 +190,18 @@ def retrieval(retrieval_amount):
 
 	# formula to take multiple images
 	j=0
+	img_id = 0
 	for img in closest_imgs:
 		print("the most similar images are %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
+		if len(result[j]) == 18:
+			img_id = int(result[j][11:14])
+		if len(result[j]) == 17:
+			img_id = int(result[j][11:13])
+		if len(result[j]) == 16:
+			img_id = int(result[j][11:12])
 		cv.imshow("Result " + str(j), closest_imgs[j])
-		retrieved_images.append(database.index(result[j]))
+		#retrieved_images.append(database.index(result[j]))
+		retrieved_images.append(img_id)
 		j+=1
 
     # calculation of the recall and precision rate
@@ -201,9 +209,9 @@ def retrieval(retrieval_amount):
 	for i in retrieved_images:
 		if i in range((chosenCategory * 100) - 100, (chosenCategory * 100) - 1):
 			inCategory += 1
-	recall_rate = inCategory * 1.0
-	precision_rate = inCategory / len(retrieved_images) * 100.0
-
+	recall_rate = inCategory * 1.0 	
+	precision_rate = inCategory / retrieval_amount * 100.0
+	
 	# print the recall and precision rate
 	print("\n")
 	print("Recall Rate: " + str(recall_rate) + "%")
