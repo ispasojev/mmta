@@ -93,8 +93,19 @@ class BackgroundColorDetector_dinosaur():
 		else:
 			self.average_colour(i)
 	
+def checkMaxDifference(diffs):
+    maxValIdx = 0 
+    maxVal = diffs[maxValIdx]
+    i = 0
+    for current in diffs:
+        # if current bigger than/equals maxVal -> replace 
+        if current >= maxVal:
+            maxVal = current
+            maxValIdx = i
+        i +=1
+    return maxValIdx, maxVal
 
-def retrieval():
+def retrieval(retrieval_amount):
 	print("1: beach")
 	print("2: building")
 	print("3: bus")
@@ -104,24 +115,36 @@ def retrieval():
 	print("7: man")
 	choice = input("Type in the number to choose a category and type enter to confirm\n")
 	if choice == '1':
+		chosenCategory = 2
 		src_input = cv.imread("beach.jpg")
 		print("You choose: %s - beach\n" % choice)
 	if choice == '2':
+		chosenCategory = 3
 		src_input = cv.imread("building.jpg")
 		print("You choose: %s - building\n" % choice)
 	if choice == '3':
+		chosenCategory = 4
 		src_input = cv.imread("bus.jpg")
 		print("You choose: %s - bus\n" % choice)
 	if choice == '4':
+		chosenCategory = 5
 		src_input = cv.imread("dinosaur.jpg")
 		print("You choose: %s - dinosaur\n" % choice)
+		for i in range(1000):
+				y= str(i)
+				BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
+				# print("Image Number is: "+y+".jpg  ")
+				BackgroundColor.detect(i)
 	if choice == '5':
+		chosenCategory = 7
 		src_input = cv.imread("flower.jpg")
 		print("You choose: %s - flower\n" % choice)
 	if choice == '6':
+		chosenCategory = 8
 		src_input = cv.imread("horse.jpg")
 		print("You choose: %s - horse\n" % choice)
 	if choice == '7':
+		chosenCategory = 1
 		src_input = cv.imread("man.jpg")
 		print("You choose: %s - man\n" % choice)	
 
@@ -138,6 +161,12 @@ def retrieval():
 	database = sorted(glob(database_dir + "/*.jpg"))
 
 
+	# initialize arrays for fixed size of retrieval_amount
+	min_diffs = [999999999.0] * retrieval_amount
+	closest_imgs = [0] * retrieval_amount
+	result = [0] * retrieval_amount
+	# initialize maxVal
+	maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	for img in database:
 		# read image
 		img_rgb = cv.imread(img)
@@ -149,17 +178,41 @@ def retrieval():
 		# diff = compareImgs_hist(src_gray, img_gray)
 		print(img, diff)
 		# find the minimum difference
-		if diff <= min_diff:
+		if diff <= maxVal:
 			# update the minimum difference
-			min_diff = diff
+			min_diffs[maxValIdx] = diff
 			# update the most similar image
-			closest_img = img_rgb
-			result = img
-	
-	print("the most similar image is %s, the pixel-by-pixel difference is %f " % (result, min_diff))
-	print("\n")
+			closest_imgs[maxValIdx] = img_rgb
+			result[maxValIdx] = img
+			# update max difference in min_diffs array
+			maxValIdx, maxVal = checkMaxDifference(min_diffs)
 
-	cv.imshow("Result", closest_img)
+	# initializing list of retrieved images
+	retrieved_images = []
+
+	# formula to take multiple images
+	j=0
+	for img in closest_imgs:
+		print("the most similar images are %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
+		cv.imshow("Result " + str(j), closest_imgs[j])
+		retrieved_images.append(database.index(result[j]))
+		j+=1
+
+	
+
+    # calculation of the recall and precision rate
+	inCategory = 0 # number of image in correct category
+	for i in retrieved_images:
+		if i in range((chosenCategory * 100) - 100, (chosenCategory * 100) - 1):
+			inCategory += 1
+	recall_rate = inCategory / retrieval_amount * 1.0
+	precision_rate = inCategory / len(retrieved_images) * 100.0
+
+	# print the recall and precision rate
+	print("\n")
+	print("Recall Rate: " + str(recall_rate) + "%")
+	print("Precision Rate: " + str(precision_rate) + "%")
+
 	cv.waitKey(0)
 	cv.destroyAllWindows()
 
@@ -211,7 +264,13 @@ def main():
 	print("2: SIFT demo")
 	number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
 	if number == 1:
-		retrieval()
+		print("How many images do you want to retrieve?")
+		numRetrievedImg = int(input(""))
+		if numRetrievedImg > 0:
+			retrieval(numRetrievedImg)
+		else:
+			print("Invalid input")
+			exit()
 	elif number == 2:
 		# SIFT()
 		# pass
