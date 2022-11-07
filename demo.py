@@ -157,7 +157,7 @@ def retrieval(retrieval_amount):
 	src_gray = cv.cvtColor(src_input, cv.COLOR_BGR2GRAY)
 
 	# read image database
-	database = sorted(glob(database_dir + "/*.jpg"))
+	database = sorted(glob(database_dir + "/*.jpg"), key = len)
 
 	# initialize arrays for fixed size of retrieval_amount
 	min_diffs = [999999999.0] * retrieval_amount
