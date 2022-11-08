@@ -181,43 +181,80 @@ def retrieval(retrieval_amount):
 	# for SIFT/ORB, we need max_diffs and minVal
 	max_diffs = [0] * retrieval_amount
 	minValIdx, minVal = checkMinDifference(max_diffs)
-	
-	for img in database:
-		# read image
-		img_rgb = cv.imread(img)
-		# convert to gray scale
-		img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-		
-  		# compare the two images
-		if choice == '4': # dinosaur
-			diff = compareImgs(src_gray, img_gray)
-	
-		if choice == '6': #horse
-			diff = compareImgs(src_input, img_rgb)
-   
-		if choice == '3' or choice == '7': #bus, flower, human
-			#dst = cv.GaussianBlur(src_input,(25,25),0)
-			#diff = compute_ORBdiff(dst, img_rgb)
-			diff = compute_SIFTdiff(src_input, img_rgb)
-			if diff >= minVal:
-				max_diffs[minValIdx] = diff
-				closest_imgs[minValIdx] = img_rgb
-				result[minValIdx] = img
-				minValIdx, minVal = checkMinDifference(max_diffs)
-    
-		else:
-			diff = compareImgs(src_gray, img_gray)
-		print(img, diff)
-		# find the minimum difference
-		if choice == '1' or choice == '2' or choice == '4' or choice == '6':
+	diff = 0
+ 
+	if choice == '7':
+		faces_amount = []
+		id_img_w_faces = []		
+		minFaces = 0
+		minFacesIdx = 0
+		i = 0
+
+		for img in database:
+			img_rgb = cv.imread(img)
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+
+			# face detection
+			face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
+			faces = face_cascade.detectMultiScale(img_gray, 1.1, 4)
+			if len(faces)>0:
+				faces_amount.append(len(faces)) # how many faces found in img
+				id_img_w_faces.append(img) # save img name
+				if len(faces)<= minFaces:
+					minFacesIdx = i # same img idx for smallest amount of found faces in img 
+					#TODO - optional: Enhance performance of recall/precision by includig all with more than 1 face detected 
+     
+		for img in id_img_w_faces:
+			img_rgb = cv.imread(img)
+			diff = compareImgs_hist(src_input, img_rgb)
+
 			if diff <= maxVal:
-				# update the minimum difference
-				min_diffs[maxValIdx] = diff
-				# update the most similar image
-				closest_imgs[maxValIdx] = img_rgb
-				result[maxValIdx] = img
-				# update max difference in min_diffs array
-				maxValIdx, maxVal = checkMaxDifference(min_diffs)
+					# update the minimum difference
+					min_diffs[maxValIdx] = diff
+					# update the most similar image
+					closest_imgs[maxValIdx] = img_rgb
+					result[maxValIdx] = img
+					# update max difference in min_diffs array
+					maxValIdx, maxVal = checkMaxDifference(min_diffs)
+   
+	else:
+		for img in database:
+			# read image
+			img_rgb = cv.imread(img)
+			# convert to gray scale
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+			
+			# compare the two images
+			if choice == '4': # dinosaur
+				diff = compareImgs(src_gray, img_gray)
+
+			if choice == '6': #horse
+				diff = compareImgs(src_input, img_rgb)
+
+			if choice == '3': #bus
+				#dst = cv.GaussianBlur(src_input,(25,25),0)
+				#diff = compute_ORBdiff(dst, img_rgb)
+				diff = compute_SIFTdiff(src_input, img_rgb)
+				if diff >= minVal:
+					max_diffs[minValIdx] = diff
+					closest_imgs[minValIdx] = img_rgb
+					result[minValIdx] = img
+					minValIdx, minVal = checkMinDifference(max_diffs)
+
+
+			else:
+				diff = compareImgs(src_gray, img_gray)
+			print(img, diff)
+			# find the minimum difference
+			if choice == '1' or choice == '2' or choice == '4' or choice == '5' or choice == '6':
+				if diff <= maxVal:
+					# update the minimum difference
+					min_diffs[maxValIdx] = diff
+					# update the most similar image
+					closest_imgs[maxValIdx] = img_rgb
+					result[maxValIdx] = img
+					# update max difference in min_diffs array
+					maxValIdx, maxVal = checkMaxDifference(min_diffs)
 
 	# initializing list of retrieved images
 	retrieved_images = []
