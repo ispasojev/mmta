@@ -171,9 +171,15 @@ def retrieval(retrieval_amount):
 		# convert to gray scale
 		img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 		# compare the two images
-		diff = compareImgs(src_gray, img_gray)
+		if choice == '4': # dinosaur
+			diff = compareImgs(src_gray, img_gray)
+		#diff = compareImgs(src_gray, img_gray)
+		if choice == '6': #horse
+			diff = compareImgs(src_input, img_rgb)
 		# compare the two images by histogram, uncomment the following line to use histogram
-		# diff = compareImgs_hist(src_gray, img_gray)
+		#diff = compareImgs_hist(src_gray, img_gray)
+		else:
+			diff = compareImgs(src_gray, img_gray)
 		print(img, diff)
 		# find the minimum difference
 		if diff <= maxVal:
@@ -200,7 +206,6 @@ def retrieval(retrieval_amount):
 		if len(result[j]) == 16:
 			img_id = int(result[j][11:12])
 		cv.imshow("Result " + str(j), closest_imgs[j])
-		#retrieved_images.append(database.index(result[j]))
 		retrieved_images.append(img_id)
 		j+=1
 
