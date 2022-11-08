@@ -242,7 +242,7 @@ def retrieval(retrieval_amount):
 					minValIdx, minVal = checkMinDifference(max_diffs)
 
 
-			else:
+			if choice == '1' or choice == '2' or choice == '5':
 				diff = compareImgs(src_gray, img_gray)
 			print(img, diff)
 			# find the minimum difference
