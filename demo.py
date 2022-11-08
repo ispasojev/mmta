@@ -104,6 +104,18 @@ def checkMaxDifference(diffs):
         i +=1
     return maxValIdx, maxVal
 
+def checkMinDifference(diffs):
+    minValIdx = 0 
+    minVal = diffs[minValIdx]
+    i = 0
+    for current in diffs:
+        # if current smaller than/equals minVal -> replace 
+        if current <= minVal:
+            minVal = current
+            minValIdx = i
+        i +=1
+    return minValIdx, minVal
+
 def retrieval(retrieval_amount):
 	print("1: beach")
 	print("2: building")
@@ -165,31 +177,84 @@ def retrieval(retrieval_amount):
 	result = [0] * retrieval_amount
 	# initialize maxVal
 	maxValIdx, maxVal = checkMaxDifference(min_diffs)
-	for img in database:
-		# read image
-		img_rgb = cv.imread(img)
-		# convert to gray scale
-		img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-		# compare the two images
-		if choice == '4': # dinosaur
-			diff = compareImgs(src_gray, img_gray)
-		#diff = compareImgs(src_gray, img_gray)
-		if choice == '6': #horse
-			diff = compareImgs(src_input, img_rgb)
-		# compare the two images by histogram, uncomment the following line to use histogram
-		#diff = compareImgs_hist(src_gray, img_gray)
-		else:
-			diff = compareImgs(src_gray, img_gray)
-		print(img, diff)
-		# find the minimum difference
-		if diff <= maxVal:
-			# update the minimum difference
-			min_diffs[maxValIdx] = diff
-			# update the most similar image
-			closest_imgs[maxValIdx] = img_rgb
-			result[maxValIdx] = img
-			# update max difference in min_diffs array
-			maxValIdx, maxVal = checkMaxDifference(min_diffs)
+ 
+	# for SIFT/ORB, we need max_diffs and minVal
+	max_diffs = [0] * retrieval_amount
+	minValIdx, minVal = checkMinDifference(max_diffs)
+	diff = 0
+ 
+	if choice == '7':
+		faces_amount = []
+		id_img_w_faces = []		
+		minFaces = 0
+		minFacesIdx = 0
+		i = 0
+
+		for img in database:
+			img_rgb = cv.imread(img)
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+
+			# face detection
+			face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
+			faces = face_cascade.detectMultiScale(img_gray, 1.1, 4)
+			if len(faces)>0:
+				faces_amount.append(len(faces)) # how many faces found in img
+				id_img_w_faces.append(img) # save img name
+				if len(faces)<= minFaces:
+					minFacesIdx = i # same img idx for smallest amount of found faces in img 
+					#TODO - optional: Enhance performance of recall/precision by includig all with more than 1 face detected 
+     
+		for img in id_img_w_faces:
+			img_rgb = cv.imread(img)
+			diff = compareImgs_hist(src_input, img_rgb)
+
+			if diff <= maxVal:
+					# update the minimum difference
+					min_diffs[maxValIdx] = diff
+					# update the most similar image
+					closest_imgs[maxValIdx] = img_rgb
+					result[maxValIdx] = img
+					# update max difference in min_diffs array
+					maxValIdx, maxVal = checkMaxDifference(min_diffs)
+   
+	else:
+		for img in database:
+			# read image
+			img_rgb = cv.imread(img)
+			# convert to gray scale
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+			
+			# compare the two images
+			if choice == '4': # dinosaur
+				diff = compareImgs(src_gray, img_gray)
+
+			if choice == '6': #horse
+				diff = compareImgs(src_input, img_rgb)
+
+			if choice == '3': #bus
+				#dst = cv.GaussianBlur(src_input,(25,25),0)
+				#diff = compute_ORBdiff(dst, img_rgb)
+				diff = compute_SIFTdiff(src_input, img_rgb)
+				if diff >= minVal:
+					max_diffs[minValIdx] = diff
+					closest_imgs[minValIdx] = img_rgb
+					result[minValIdx] = img
+					minValIdx, minVal = checkMinDifference(max_diffs)
+
+
+			if choice == '1' or choice == '2' or choice == '5':
+				diff = compareImgs(src_gray, img_gray)
+			print(img, diff)
+			# find the minimum difference
+			if choice == '1' or choice == '2' or choice == '4' or choice == '5' or choice == '6':
+				if diff <= maxVal:
+					# update the minimum difference
+					min_diffs[maxValIdx] = diff
+					# update the most similar image
+					closest_imgs[maxValIdx] = img_rgb
+					result[maxValIdx] = img
+					# update max difference in min_diffs array
+					maxValIdx, maxVal = checkMaxDifference(min_diffs)
 
 	# initializing list of retrieved images
 	retrieved_images = []
@@ -224,6 +289,38 @@ def retrieval(retrieval_amount):
 
 	cv.waitKey(0)
 	cv.destroyAllWindows()
+ 
+ 
+def compute_SIFTdiff(img1, img2):
+	#-- Step 1: Detect the keypoints using SIFT Detector, compute the descriptors
+	minHessian = 400
+	detector = cv.SIFT_create() 
+	#detector = cv.xfeatures2d.BEBLID_create(0.75)
+	keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
+	keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
+	#-- Step 2: Matching descriptor vectors with a brute force matcher
+	matcher = cv.DescriptorMatcher_create(cv.DescriptorMatcher_BRUTEFORCE)
+	#matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
+	#matcher = cv.BFMatcher(cv.NORM_L1, crossCheck=True)
+	matches = matcher.match(descriptors1, descriptors2)
+
+	matches = sorted(matches, key = lambda x:x.distance)
+	min_dist = matches[0].distance
+	good_matches = tuple(filter(lambda x:x.distance <= 1.2 * min_dist, matches)) #TODO: parameter adaptable
+	return len(good_matches)
+
+def compute_ORBdiff(img1, img2):
+	detector = cv.ORB_create(nfeatures=500) #ORB better for flowers with 1.2*min_dist and blurred src_input, n_features=500
+	keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
+	keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
+
+	matcher = cv.DescriptorMatcher_create(cv.DescriptorMatcher_BRUTEFORCE)
+	matches = matcher.match(descriptors1, descriptors2)
+
+	matches = sorted(matches, key = lambda x:x.distance)
+	min_dist = matches[0].distance
+	good_matches = tuple(filter(lambda x:x.distance <= 1.2 * min_dist, matches))
+	return len(good_matches)
 
 def SIFT():
 	img1 = cv.imread("flower.jpg")
@@ -259,13 +356,6 @@ def SIFT():
 	cv.waitKey()
 
 def main():
-	# img = cv.imread("beach.jpg")
-	# cv.imshow("Image", img)
-	# from matplotlib import pyplot as plt
-	# plt.hist(img.ravel(),10,[0,256]); plt.show()
-	# gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-	# cv.imshow("Gray Image", gray_img)
-	# cv.waitKey()
 
 	print("1: Image retrieval demo")
 	print("2: SIFT demo")
