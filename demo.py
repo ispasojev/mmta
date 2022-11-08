@@ -261,20 +261,7 @@ def main():
 			print("Invalid input")
 			exit()
 	elif number == 2:
-		# SIFT()
-		# pass
-		print("1: dinosaur")
-		print("2: horse")
-		print("3: beach")
-		number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
-		if number == 1:
-			# Presicion = 79/92 = 85.9%
-			# recall = 79/100 = 79%
-			for i in range(1000):
-				y= str(i)
-				BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
-				# print("Image Number is: "+y+".jpg  ")
-				BackgroundColor.detect(i)
+		SIFT()
 	else:
 		print("Invalid input")
 		exit()
