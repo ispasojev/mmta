@@ -556,6 +556,16 @@ def retrieve_threshold(threshold):
 	else:
 		precision_rate = 0
 	
+	for img_name in result:
+		img_path = "./mmta/result" + img_name
+		print("img_path", img_path)
+		print("image_name",img_name)
+		img = cv.imread(img_name)
+		isWritten = cv.imwrite(img_path, img)
+		print(isWritten)
+		if isWritten:
+			print('The image is successfully saved.')
+ 
 	# print the recall and precision rate
 	print("\n")
 	print("Recall Rate: " + str(recall_rate) + "%")
