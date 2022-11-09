@@ -257,8 +257,6 @@ def retrieval(retrieval_amount):
 					result[maxValIdx] = img
 					# update max difference in min_diffs array
 					maxValIdx, maxVal = checkMaxDifference(min_diffs)
-			
-			print("min_diffs", min_diffs)
 
 	# initializing list of retrieved images
 	retrieved_images = []
@@ -553,8 +551,10 @@ def retrieve_threshold(threshold):
 		if i in range((chosenCategory * 100) - 100, (chosenCategory * 100) - 1):
 			inCategory += 1
 	recall_rate = inCategory * 1.0 	
-	precision_rate = inCategory / len(result) * 100.0 
-	print("len(result)", len(result))
+	if len(result)>0:
+		precision_rate = inCategory / len(result) * 100.0 
+	else:
+		precision_rate = 0
 	
 	# print the recall and precision rate
 	print("\n")
