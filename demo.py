@@ -1,5 +1,6 @@
 from collections import Counter
 import sys
+from tokenize import Double
 import cv2 as cv
 import numpy as np
 from glob import glob
@@ -244,6 +245,7 @@ def retrieval(retrieval_amount):
 
 			if choice == '1' or choice == '2' or choice == '5':
 				diff = compareImgs(src_gray, img_gray)
+				print("diff", diff)
 			print(img, diff)
 			# find the minimum difference
 			if choice == '1' or choice == '2' or choice == '4' or choice == '5' or choice == '6':
@@ -255,6 +257,8 @@ def retrieval(retrieval_amount):
 					result[maxValIdx] = img
 					# update max difference in min_diffs array
 					maxValIdx, maxVal = checkMaxDifference(min_diffs)
+			
+			print("min_diffs", min_diffs)
 
 	# initializing list of retrieved images
 	retrieved_images = []
@@ -354,11 +358,222 @@ def SIFT():
 	#-- Show detected matches
 	cv.imshow('Good Matches: SIFT (Python)', img_matches)
 	cv.waitKey()
+ 
+def retrieve_threshold(threshold):
+	print("1: beach")
+	print("2: building")
+	print("3: bus")
+	print("4: dinosaur")
+	print("5: flower")
+	print("6: horse")
+	print("7: man")
+	choice = input("Type in the number to choose a category and type enter to confirm\n")
+	if choice == '1':
+		chosenCategory = 2
+		src_input = cv.imread("beach.jpg")
+		print("You choose: %s - beach\n" % choice)
+	if choice == '2':
+		chosenCategory = 3
+		src_input = cv.imread("building.jpg")
+		print("You choose: %s - building\n" % choice)
+	if choice == '3':
+		chosenCategory = 4
+		src_input = cv.imread("bus.jpg")
+		print("You choose: %s - bus\n" % choice)
+	if choice == '4':
+		chosenCategory = 5
+		src_input = cv.imread("dinosaur.jpg")
+		print("You choose: %s - dinosaur\n" % choice)
+		# for i in range(1000):
+		# 		y= str(i)
+		# 		BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
+		# 		# print("Image Number is: "+y+".jpg  ")
+		# 		BackgroundColor.detect(i)
+	if choice == '5':
+		chosenCategory = 7
+		src_input = cv.imread("flower.jpg")
+		print("You choose: %s - flower\n" % choice)
+	if choice == '6':
+		chosenCategory = 8
+		src_input = cv.imread("horse.jpg")
+		print("You choose: %s - horse\n" % choice)
+	if choice == '7':
+		chosenCategory = 1
+		src_input = cv.imread("man.jpg")
+		print("You choose: %s - man\n" % choice)	
+
+	min_diff = 1e50
+
+	# src_input = cv.imread("man.jpg")
+
+	cv.imshow("Input", src_input)
+
+	# change the image to gray scale
+	src_gray = cv.cvtColor(src_input, cv.COLOR_BGR2GRAY)
+
+	# read image database
+	database = sorted(glob(database_dir + "/*.jpg"), key = len)
+
+	# initialize arrays for fixed size of retrieval_amount
+	min_diffs = []
+	closest_imgs = []
+	result = []
+	# initialize maxVal
+	#maxValIdx, maxVal = checkMaxDifference(min_diffs)
+ 
+	# for SIFT/ORB, we need max_diffs and minVal
+	max_diffs = []
+	#minValIdx, minVal = checkMinDifference(max_diffs)
+	diff = 0
+ 
+	if choice == '7': # choice is human, we need face detector 
+		faces_amount = []
+		id_img_w_faces = []	
+
+		diffSum = 0 
+		minDiff_thres = 999999999
+		maxDiff_thres = 0
+
+		for img in database:
+			img_rgb = cv.imread(img)
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+
+			# face detection
+			face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
+			faces = face_cascade.detectMultiScale(img_gray, 1.1, 4)
+			if len(faces)>0:
+				faces_amount.append(len(faces)) # how many faces found in img
+				id_img_w_faces.append(img) # save img name
+
+		for img in id_img_w_faces:
+			img_rgb = cv.imread(img)
+			diff = compareImgs_hist(src_input, img_rgb)
+
+			# Necessary parameteres to compute threshold 
+			diffSum += diff
+			if diff <= minDiff_thres:
+				minDiff_thres = diff
+			if diff >= maxDiff_thres:
+				maxDiff_thres = diff
+    
+		thresValue = computeAllowedDiff(diffSum, minDiff_thres, maxDiff_thres, threshold)
+		for img in id_img_w_faces:
+			img_rgb = cv.imread(img)
+			diff = compareImgs_hist(src_input, img_rgb)
+
+			if diff <= thresValue:
+				min_diffs.append(diff)
+				result.append(img)
+				closest_imgs.append(img_rgb)
+
+   
+	else: # choice is not human, we use other algos 
+		diffSum = 0 
+		minDiff_thres = 999999999
+		maxDiff_thres = 0
+		for img in database:
+			img_rgb = cv.imread(img)
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+			
+			# compare the two images
+			if choice == '4': # dinosaur
+				diff = compareImgs(src_gray, img_gray)
+
+			if choice == '6': #horse
+				diff = compareImgs(src_input, img_rgb)
+
+			if choice == '3': #bus
+				diff = compute_SIFTdiff(src_input, img_rgb)
+
+			if choice == '1' or choice == '2' or choice == '5': # beach, building, flower
+				diff = compareImgs(src_gray, img_gray)
+				print("diff", diff)
+			print(img, diff)
+       
+			diffSum += diff
+			if diff <= minDiff_thres:
+				minDiff_thres = diff
+			elif diff >= maxDiff_thres:
+				maxDiff_thres = diff
+		
+		thresValue = computeAllowedDiff(diffSum, minDiff_thres, maxDiff_thres, threshold)
+		print("thresValue", thresValue)
+
+		for img in database:
+			img_rgb = cv.imread(img)
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+			
+			if choice == '4': # dinosaur
+				diff = compareImgs(src_gray, img_gray)
+
+			if choice == '6': # horse
+				diff = compareImgs(src_input, img_rgb)
+
+			if choice == '3': # bus
+				diff = compute_SIFTdiff(src_input, img_rgb)
+				if diff >= minVal:
+					max_diffs[minValIdx] = diff
+					closest_imgs[minValIdx] = img_rgb
+					result[minValIdx] = img
+					minValIdx, minVal = checkMinDifference(max_diffs)
+
+
+			if choice == '1' or choice == '2' or choice == '5':
+				diff = compareImgs(src_gray, img_gray)
+			#print(img, diff)
+
+			# check if current difference <= threshold and append to result if so.
+			if choice == '1' or choice == '2' or choice == '4' or choice == '5' or choice == '6':
+				if diff <= thresValue:
+					min_diffs.append(diff)
+					result.append(img)
+					closest_imgs.append(img_rgb)
+   
+    # initializing list of retrieved images
+	retrieved_images = []
+
+	# formula to take multiple images
+	j=0
+	img_id = 0
+	for img in closest_imgs:
+		print("the most similar images are %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
+		if len(result[j]) == 18:
+			img_id = int(result[j][11:14])
+		if len(result[j]) == 17:
+			img_id = int(result[j][11:13])
+		if len(result[j]) == 16:
+			img_id = int(result[j][11:12])
+		cv.imshow("Result " + str(j), closest_imgs[j])
+		retrieved_images.append(img_id)
+		j+=1
+
+    # calculation of the recall and precision rate
+	inCategory = 0
+	for i in retrieved_images:
+		if i in range((chosenCategory * 100) - 100, (chosenCategory * 100) - 1):
+			inCategory += 1
+	recall_rate = inCategory * 1.0 	
+	precision_rate = inCategory / len(result) * 100.0 
+	print("len(result)", len(result))
+	
+	# print the recall and precision rate
+	print("\n")
+	print("Recall Rate: " + str(recall_rate) + "%")
+	print("Precision Rate: " + str(precision_rate) + "%")
+
+	cv.waitKey(0)
+	cv.destroyAllWindows()
+ 
+def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
+    mean = diffSum/1000
+    diffRange = maxDiff - minDiff
+    return (diffRange * threshold)
+	
 
 def main():
 
-	print("1: Image retrieval demo")
-	print("2: SIFT demo")
+	print("1: Retrieve certain amount of images")
+	print("2: Retrieve all images above threshold")
 	number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
 	if number == 1:
 		print("How many images do you want to retrieve?")
@@ -369,20 +584,15 @@ def main():
 			print("Invalid input")
 			exit()
 	elif number == 2:
-		# SIFT()
-		# pass
-		print("1: dinosaur")
-		print("2: horse")
-		print("3: beach")
-		number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
-		if number == 1:
-			# Presicion = 79/92 = 85.9%
-			# recall = 79/100 = 79%
-			for i in range(1000):
-				y= str(i)
-				BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
-				# print("Image Number is: "+y+".jpg  ")
-				BackgroundColor.detect(i)
+		print("Input threshold from 0 to 1 (0=loose, 1=strict)")
+		threshold = float(input(""))
+		print("threshold",threshold)
+		print("threshold type",type(threshold))
+		if 0 <= threshold <= 1:
+			retrieve_threshold(threshold)
+		else:
+			print("Invalid input")
+			exit()
 	else:
 		print("Invalid input")
 		exit()
