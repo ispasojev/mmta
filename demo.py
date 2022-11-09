@@ -584,7 +584,7 @@ def main():
 			print("Invalid input")
 			exit()
 	elif number == 2:
-		print("Input threshold from 0 to 1 (0=loose, 1=strict)")
+		print("Input threshold from 0 to 1, e.g. 0.5 (0=loose, 1=strict)")
 		threshold = float(input(""))
 		print("threshold",threshold)
 		print("threshold type",type(threshold))
