@@ -4,6 +4,7 @@ from tokenize import Double
 import cv2 as cv
 import pdb
 import numpy as np
+import math
 from glob import glob
 
 # the directory of the image database
@@ -534,7 +535,6 @@ def retrieve_threshold(threshold):
 				result.append(img)
 				closest_imgs.append(img_rgb)
 
-   
 	else: # choice is not human, we use other algorithms
 		diffSum = 0 
 		minDiff_thres = 999999999
