@@ -94,6 +94,68 @@ class BackgroundColorDetector_dinosaur():
 		else:
 			self.average_colour(i)
 
+def flowerContour(img1, img2):
+	kernel = cv.getStructuringElement(cv.MORPH_RECT, (6, 6))
+	totalArea1 = 0
+	totalArea2 = 0
+
+	# calculation for the area of a circle in img1
+	heightCenter1 = img1.shape[0]/2
+	widthCenter1 = img1.shape[1]/2
+	heightCircle1 = img1.shape[0]/2.3
+	widthCircle1 = img1.shape[1]/2.7
+
+	center1 = (round(widthCenter1), round(heightCenter1))
+	axesLength1 = (round(widthCircle1), round(heightCircle1))
+	circleArea1 = round(math.pi * widthCircle1 * heightCircle1)
+
+    # calculation for contours and total area of img1
+	L,U,V = cv.split(cv.cvtColor(img1, cv.COLOR_BGR2LUV))
+	channel1 = cv.merge([L, L, L])
+	channel1 = cv.cvtColor(channel1, cv.COLOR_BGR2GRAY)
+	closed1 = cv.morphologyEx(channel1, cv.MORPH_CLOSE, kernel)
+	closed1 = cv.medianBlur(closed1, 3)
+	retval, threshold1 = cv.threshold(closed1, 110, 255, cv.THRESH_BINARY)
+
+	contours1, hierarchy1 = cv.findContours(threshold1, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)	
+
+	for contour in contours1:
+		totalArea1 += cv.contourArea(contour)
+
+	# calculation for the area of a circle in img2
+	img2copy = img2.copy()
+
+	heightCenter2 = img2copy.shape[0]/2
+	widthCenter2 = img2copy.shape[1]/2
+	heightCircle2 = img2copy.shape[0]/2.3
+	widthCircle2 = img2copy.shape[1]/2.5
+
+	center2 = (round(widthCenter2), round(heightCenter2))
+	axesLength2 = (round(widthCircle2), round(heightCircle2))
+	circleArea2 = round(math.pi * widthCircle2 * heightCircle2)
+
+	img2circle = cv.ellipse(img2copy, center2, axesLength2, 0, 0, 360, (0, 0, 255), 2)
+
+	# calculation for contours and total area of img2
+	L,U,V = cv.split(cv.cvtColor(img2circle, cv.COLOR_BGR2LUV))
+	channel2 = cv.merge([U, U, U])
+	channel2 = cv.cvtColor(channel2, cv.COLOR_BGR2GRAY)
+	closed2 = cv.morphologyEx(channel2, cv.MORPH_CLOSE, kernel)
+	closed2 = cv.medianBlur(closed2, 3)
+	retval, threshold2 = cv.threshold(closed2, 110, 255, cv.THRESH_BINARY)
+	
+	contours2, hierarchy2 = cv.findContours(threshold2, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
+
+	for contour in contours2:
+		totalArea2 += cv.contourArea(contour)
+
+	# calculation of contour area over circle area
+	circleRatio1 = totalArea1 / circleArea1
+	circleRatio2 = totalArea2 / circleArea2
+	difference = circleRatio2 / circleRatio1
+
+	return difference
+
 def checkMaxDifference(diffs):
     maxValIdx = 0 
     maxVal = diffs[maxValIdx]
@@ -219,7 +281,7 @@ def retrieval(retrieval_amount):
 					# update max difference in min_diffs array
 					maxValIdx, maxVal = checkMaxDifference(min_diffs)
    
-	else:
+	else: # choice is not human, we use other algorithms
 		for img in database:
 			# read image
 			img_rgb = cv.imread(img)
@@ -227,13 +289,10 @@ def retrieval(retrieval_amount):
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 			
 			# compare the two images
-			if choice == '4': # dinosaur
+			if choice == '1' or choice == '2': #beach, building
 				diff = compareImgs(src_gray, img_gray)
 
-			if choice == '6': #horse
-				diff = compareImgs(src_input, img_rgb)
-
-			if choice == '3': #bus
+			elif choice == '3': #bus
 				#dst = cv.GaussianBlur(src_input,(25,25),0)
 				#diff = compute_ORBdiff(dst, img_rgb)
 				diff = compute_SIFTdiff(src_input, img_rgb)
@@ -243,21 +302,25 @@ def retrieval(retrieval_amount):
 					result[minValIdx] = img
 					minValIdx, minVal = checkMinDifference(max_diffs)
 
-
-			if choice == '1' or choice == '2' or choice == '5':
+			elif choice == '4': # dinosaur
 				diff = compareImgs(src_gray, img_gray)
-				print("diff", diff)
+
+			elif choice == '5': #flower
+				diff = flowerContour(src_input, img_rgb)
+
+			elif choice == '6': #horse
+				diff = compareImgs(src_input, img_rgb)
+
 			print(img, diff)
 			# find the minimum difference
-			if choice == '1' or choice == '2' or choice == '4' or choice == '5' or choice == '6':
-				if diff <= maxVal:
-					# update the minimum difference
-					min_diffs[maxValIdx] = diff
-					# update the most similar image
-					closest_imgs[maxValIdx] = img_rgb
-					result[maxValIdx] = img
-					# update max difference in min_diffs array
-					maxValIdx, maxVal = checkMaxDifference(min_diffs)
+			if diff <= maxVal:
+				# update the minimum difference
+				min_diffs[maxValIdx] = diff
+				# update the most similar image
+				closest_imgs[maxValIdx] = img_rgb
+				result[maxValIdx] = img
+				# update max difference in min_diffs array
+				maxValIdx, maxVal = checkMaxDifference(min_diffs)
 
 	# initializing list of retrieved images
 	retrieved_images = []
@@ -292,7 +355,6 @@ def retrieval(retrieval_amount):
 
 	cv.waitKey(0)
 	cv.destroyAllWindows()
- 
  
 def compute_SIFTdiff(img1, img2):
 	#-- Step 1: Detect the keypoints using SIFT Detector, compute the descriptors
@@ -473,7 +535,7 @@ def retrieve_threshold(threshold):
 				closest_imgs.append(img_rgb)
 
    
-	else: # choice is not human, we use other algos 
+	else: # choice is not human, we use other algorithms
 		diffSum = 0 
 		minDiff_thres = 999999999
 		maxDiff_thres = 0
@@ -482,18 +544,21 @@ def retrieve_threshold(threshold):
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 			
 			# compare the two images
-			if choice == '4': # dinosaur
+			if choice == '1' or choice == '2': # beach, building
 				diff = compareImgs(src_gray, img_gray)
 
-			if choice == '6': #horse
-				diff = compareImgs(src_input, img_rgb)
-
-			if choice == '3': #bus
+			elif choice == '3': #bus
 				diff = compute_SIFTdiff(src_input, img_rgb)
 
-			if choice == '1' or choice == '2' or choice == '5': # beach, building, flower
+			elif choice == '4': # dinosaur
 				diff = compareImgs(src_gray, img_gray)
-				print("diff", diff)
+
+			elif choice == '5': #flower
+				diff = flowerContour(src_input, img_rgb)
+
+			elif choice == '6': #horse
+				diff = compareImgs(src_input, img_rgb)
+
 			print(img, diff)
        
 			diffSum += diff
@@ -508,14 +573,11 @@ def retrieve_threshold(threshold):
 		for img in database:
 			img_rgb = cv.imread(img)
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-			
-			if choice == '4': # dinosaur
+
+			if choice == '1' or choice == '2':
 				diff = compareImgs(src_gray, img_gray)
-
-			if choice == '6': # horse
-				diff = compareImgs(src_input, img_rgb)
-
-			if choice == '3': # bus
+			
+			elif choice == '3': # bus
 				diff = compute_SIFTdiff(src_input, img_rgb)
 				if diff >= minVal:
 					max_diffs[minValIdx] = diff
@@ -523,10 +585,14 @@ def retrieve_threshold(threshold):
 					result[minValIdx] = img
 					minValIdx, minVal = checkMinDifference(max_diffs)
 
-
-			if choice == '1' or choice == '2' or choice == '5':
+			elif choice == '4': # dinosaur
 				diff = compareImgs(src_gray, img_gray)
-			#print(img, diff)
+
+			elif choice == '5': #flower
+				diff = flowerContour(src_input, img_rgb)
+
+			elif choice == '6': # horse
+				diff = compareImgs(src_input, img_rgb)
 
 			# check if current difference <= threshold and append to result if so.
 			if choice == '1' or choice == '2' or choice == '4' or choice == '5' or choice == '6':
