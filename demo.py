@@ -368,19 +368,23 @@ def retrieve_threshold(threshold):
 	print("7: man")
 	choice = input("Type in the number to choose a category and type enter to confirm\n")
 	if choice == '1':
+		category_name = "beach"
 		chosenCategory = 2
 		src_input = cv.imread("beach.jpg")
 		print("You choose: %s - beach\n" % choice)
 	if choice == '2':
+		category_name = "building"
 		chosenCategory = 3
 		src_input = cv.imread("building.jpg")
 		print("You choose: %s - building\n" % choice)
 	if choice == '3':
+		category_name = "bus"
 		chosenCategory = 4
 		src_input = cv.imread("bus.jpg")
 		print("You choose: %s - bus\n" % choice)
 	if choice == '4':
 		chosenCategory = 5
+		category_name = "dinosaur"
 		src_input = cv.imread("dinosaur.jpg")
 		print("You choose: %s - dinosaur\n" % choice)
 		# for i in range(1000):
@@ -390,13 +394,16 @@ def retrieve_threshold(threshold):
 		# 		BackgroundColor.detect(i)
 	if choice == '5':
 		chosenCategory = 7
+		category_name = "flower"
 		src_input = cv.imread("flower.jpg")
 		print("You choose: %s - flower\n" % choice)
 	if choice == '6':
 		chosenCategory = 8
+		category_name = "horse"
 		src_input = cv.imread("horse.jpg")
 		print("You choose: %s - horse\n" % choice)
 	if choice == '7':
+		category_name = "man"
 		chosenCategory = 1
 		src_input = cv.imread("man.jpg")
 		print("You choose: %s - man\n" % choice)	
@@ -558,7 +565,13 @@ def retrieve_threshold(threshold):
 		precision_rate = 0
 	
 	for img_name in result:
-		img_path = "./result/" + img_name
+		if len(img_name) == 18:
+			img_num = img_name[11:18]
+		if len(img_name) == 17:
+			img_num = img_name[11:17]
+		if len(img_name) == 16:
+			img_num = img_name[11:16]
+		img_path = "./result/" + category_name + "/" + img_num
 		img = cv.imread(img_name)
 		isWritten = cv.imwrite(img_path, img)
 		if isWritten:
