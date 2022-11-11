@@ -112,7 +112,7 @@ def flowerContour(img1, img2):
 
     # calculation for contours and total area of img1
 	L,U,V = cv.split(cv.cvtColor(img1, cv.COLOR_BGR2LUV))
-	channel1 = cv.merge([L, L, L])
+	channel1 = cv.merge([U, U, U])
 	channel1 = cv.cvtColor(channel1, cv.COLOR_BGR2GRAY)
 	closed1 = cv.morphologyEx(channel1, cv.MORPH_CLOSE, kernel)
 	closed1 = cv.medianBlur(closed1, 3)
@@ -656,7 +656,6 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
     diffRange = maxDiff - minDiff
     return (diffRange * threshold)
 	
-
 def main():
 
 	print("1: Retrieve certain amount of images")
