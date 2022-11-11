@@ -658,29 +658,29 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
 	
 def main():
 
-	print("1: Retrieve certain amount of images")
-	print("2: Retrieve all images above threshold")
-	number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
-	if number == 1:
-		print("How many images do you want to retrieve?")
-		numRetrievedImg = int(input(""))
-		if numRetrievedImg > 0:
-			retrieval(numRetrievedImg)
-		else:
-			print("Invalid input")
-			exit()
-	elif number == 2:
+	# print("1: Retrieve certain amount of images")
+	# print("2: Retrieve all images above threshold")
+	# number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
+	# if number == 1:
+	# 	print("How many images do you want to retrieve?")
+	# 	numRetrievedImg = int(input(""))
+	# 	if numRetrievedImg > 0:
+	# 		retrieval(numRetrievedImg)
+	# 	else:
+	# 		print("Invalid input")
+	# 		exit()
+	# elif number == 2:
 		print("Input threshold from 0 to 1, e.g. 0.5 (0=loose, 1=strict)")
 		threshold = float(input(""))
-		print("threshold",threshold)
-		print("threshold type",type(threshold))
+		print("threshold", threshold)
+		print("threshold type", type(threshold))
 		if 0 <= threshold <= 1:
 			retrieve_threshold(threshold)
 		else:
 			print("Invalid input")
 			exit()
-	else:
-		print("Invalid input")
-		exit()
+	# else:
+	# 	print("Invalid input")
+	# 	exit()
 
 main()
