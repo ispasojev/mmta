@@ -157,6 +157,68 @@ def flowerContour(img1, img2):
 
 	return difference
 
+def busContour(img1, img2):
+	kernel = cv.getStructuringElement(cv.MORPH_RECT, (6, 6))
+	totalArea1 = 0
+	totalArea2 = 0
+
+	# calculation for the area of a circle in img1
+	heightCenter1 = img1.shape[0]/2
+	widthCenter1 = img1.shape[1]/2
+	heightCircle1 = img1.shape[0]/2.3
+	widthCircle1 = img1.shape[1]/2.7
+
+	center1 = (round(widthCenter1), round(heightCenter1))
+	axesLength1 = (round(widthCircle1), round(heightCircle1))
+	circleArea1 = round(math.pi * widthCircle1 * heightCircle1)
+
+    # calculation for contours and total area of img1
+	L,U,V = cv.split(cv.cvtColor(img1, cv.COLOR_BGR2LUV))
+	channel1 = cv.merge([U, U, U])
+	channel1 = cv.cvtColor(channel1, cv.COLOR_BGR2GRAY)
+	closed1 = cv.morphologyEx(channel1, cv.MORPH_CLOSE, kernel)
+	closed1 = cv.medianBlur(closed1, 3)
+	retval, threshold1 = cv.threshold(closed1, 110, 255, cv.THRESH_BINARY)
+
+	contours1, hierarchy1 = cv.findContours(threshold1, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)	
+
+	for contour in contours1:
+		totalArea1 += cv.contourArea(contour)
+
+	# calculation for the area of a circle in img2
+	img2copy = img2.copy()
+
+	heightCenter2 = img2copy.shape[0]/2
+	widthCenter2 = img2copy.shape[1]/2
+	heightCircle2 = img2copy.shape[0]/2.3
+	widthCircle2 = img2copy.shape[1]/2.5
+
+	center2 = (round(widthCenter2), round(heightCenter2))
+	axesLength2 = (round(widthCircle2), round(heightCircle2))
+	circleArea2 = round(math.pi * widthCircle2 * heightCircle2)
+
+	img2circle = cv.ellipse(img2copy, center2, axesLength2, 0, 0, 360, (0, 0, 255), 2)
+
+	# calculation for contours and total area of img2
+	L,U,V = cv.split(cv.cvtColor(img2circle, cv.COLOR_BGR2LUV))
+	channel2 = cv.merge([U, U, U])
+	channel2 = cv.cvtColor(channel2, cv.COLOR_BGR2GRAY)
+	closed2 = cv.morphologyEx(channel2, cv.MORPH_CLOSE, kernel)
+	closed2 = cv.medianBlur(closed2, 3)
+	retval, threshold2 = cv.threshold(closed2, 110, 255, cv.THRESH_BINARY)
+	
+	contours2, hierarchy2 = cv.findContours(threshold2, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
+
+	for contour in contours2:
+		totalArea2 += cv.contourArea(contour)
+
+	# calculation of contour area over circle area
+	circleRatio1 = totalArea1 / circleArea1
+	circleRatio2 = totalArea2 / circleArea2
+	difference = circleRatio2 / circleRatio1
+
+	return difference
+
 def checkMaxDifference(diffs):
     maxValIdx = 0 
     maxVal = diffs[maxValIdx]
@@ -658,18 +720,18 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
 	
 def main():
 
-	# print("1: Retrieve certain amount of images")
-	# print("2: Retrieve all images above threshold")
-	# number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
-	# if number == 1:
-	# 	print("How many images do you want to retrieve?")
-	# 	numRetrievedImg = int(input(""))
-	# 	if numRetrievedImg > 0:
-	# 		retrieval(numRetrievedImg)
-	# 	else:
-	# 		print("Invalid input")
-	# 		exit()
-	# elif number == 2:
+	print("1: Retrieve certain amount of images")
+	print("2: Retrieve all images above threshold")
+	number = int(input("Type in the number to choose a demo and type enter to confirm\n"))
+	if number == 1:
+		print("How many images do you want to retrieve?")
+		numRetrievedImg = int(input(""))
+		if numRetrievedImg > 0:
+			retrieval(numRetrievedImg)
+		else:
+			print("Invalid input")
+			exit()
+	elif number == 2:
 		print("Input threshold from 0 to 1, e.g. 0.5 (0=loose, 1=strict)")
 		threshold = float(input(""))
 		print("threshold", threshold)
@@ -679,8 +741,8 @@ def main():
 		else:
 			print("Invalid input")
 			exit()
-	# else:
-	# 	print("Invalid input")
-	# 	exit()
+	else:
+		print("Invalid input")
+		exit()
 
 main()
