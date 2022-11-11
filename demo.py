@@ -268,11 +268,6 @@ def retrieval(retrieval_amount):
 		chosenCategory = 5
 		src_input = cv.imread("dinosaur.jpg")
 		print("You choose: %s - dinosaur\n" % choice)
-		# for i in range(1000):
-		# 		y= str(i)
-		# 		BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
-		# 		# print("Image Number is: "+y+".jpg  ")
-		# 		BackgroundColor.detect(i)
 	if choice == '5':
 		chosenCategory = 7
 		src_input = cv.imread("flower.jpg")
@@ -304,17 +299,11 @@ def retrieval(retrieval_amount):
 	result = [0] * retrieval_amount
 	# initialize maxVal
 	maxValIdx, maxVal = checkMaxDifference(min_diffs)
- 
-	# for SIFT/ORB, we need max_diffs and minVal
-	max_diffs = [0] * retrieval_amount
-	minValIdx, minVal = checkMinDifference(max_diffs)
 	diff = 0
  
 	if choice == '7':
 		faces_amount = []
 		id_img_w_faces = []		
-		minFaces = 0
-		minFacesIdx = 0
 		i = 0
 
 		for img in database:
@@ -327,9 +316,6 @@ def retrieval(retrieval_amount):
 			if len(faces)>0:
 				faces_amount.append(len(faces)) # how many faces found in img
 				id_img_w_faces.append(img) # save img name
-				if len(faces)<= minFaces:
-					minFacesIdx = i # same img idx for smallest amount of found faces in img 
-					#TODO - optional: Enhance performance of recall/precision by includig all with more than 1 face detected 
      
 		for img in id_img_w_faces:
 			img_rgb = cv.imread(img)
@@ -356,14 +342,7 @@ def retrieval(retrieval_amount):
 				diff = compareImgs(src_gray, img_gray)
 
 			elif choice == '3': #bus
-				#dst = cv.GaussianBlur(src_input,(25,25),0)
-				#diff = compute_ORBdiff(dst, img_rgb)
-				diff = compute_SIFTdiff(src_input, img_rgb)
-				if diff >= minVal:
-					max_diffs[minValIdx] = diff
-					closest_imgs[minValIdx] = img_rgb
-					result[minValIdx] = img
-					minValIdx, minVal = checkMinDifference(max_diffs)
+				diff = compareImgs_hist(src_gray, img_gray)
 
 			elif choice == '4': # dinosaur
 				diff = compareImgs(src_gray, img_gray)
@@ -512,11 +491,6 @@ def retrieve_threshold(threshold):
 		category_name = "dinosaur"
 		src_input = cv.imread("dinosaur.jpg")
 		print("You choose: %s - dinosaur\n" % choice)
-		# for i in range(1000):
-		# 		y= str(i)
-		# 		BackgroundColor = BackgroundColorDetector_dinosaur("image.orig/"+y+".jpg")
-		# 		# print("Image Number is: "+y+".jpg  ")
-		# 		BackgroundColor.detect(i)
 	if choice == '5':
 		chosenCategory = 7
 		category_name = "flower"
@@ -549,12 +523,7 @@ def retrieve_threshold(threshold):
 	min_diffs = []
 	closest_imgs = []
 	result = []
-	# initialize maxVal
-	#maxValIdx, maxVal = checkMaxDifference(min_diffs)
  
-	# for SIFT/ORB, we need max_diffs and minVal
-	max_diffs = []
-	#minValIdx, minVal = checkMinDifference(max_diffs)
 	diff = 0
  
 	if choice == '7': # choice is human, we need face detector 
@@ -610,7 +579,7 @@ def retrieve_threshold(threshold):
 				diff = compareImgs(src_gray, img_gray)
 
 			elif choice == '3': #bus
-				diff = compute_SIFTdiff(src_input, img_rgb)
+				diff = compareImgs_hist(src_gray, img_gray)
 
 			elif choice == '4': # dinosaur
 				diff = compareImgs(src_gray, img_gray)
@@ -640,12 +609,7 @@ def retrieve_threshold(threshold):
 				diff = compareImgs(src_gray, img_gray)
 			
 			elif choice == '3': # bus
-				diff = compute_SIFTdiff(src_input, img_rgb)
-				if diff >= minVal:
-					max_diffs[minValIdx] = diff
-					closest_imgs[minValIdx] = img_rgb
-					result[minValIdx] = img
-					minValIdx, minVal = checkMinDifference(max_diffs)
+				diff = compareImgs_hist(src_gray, img_gray)
 
 			elif choice == '4': # dinosaur
 				diff = compareImgs(src_gray, img_gray)
