@@ -118,7 +118,7 @@ def flowerContour(img1, img2):
 	closed1 = cv.medianBlur(closed1, 3)
 	retval, threshold1 = cv.threshold(closed1, 110, 255, cv.THRESH_BINARY)
 
-	contours1, hierarchy1 = cv.findContours(threshold1, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)	
+	contours1, hierarchy1 = cv.findContours(threshold1, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
 
 	for contour in contours1:
 		totalArea1 += cv.contourArea(contour)
@@ -144,7 +144,7 @@ def flowerContour(img1, img2):
 	closed2 = cv.morphologyEx(channel2, cv.MORPH_CLOSE, kernel)
 	closed2 = cv.medianBlur(closed2, 3)
 	retval, threshold2 = cv.threshold(closed2, 110, 255, cv.THRESH_BINARY)
-	
+
 	contours2, hierarchy2 = cv.findContours(threshold2, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
 
 	for contour in contours2:
@@ -180,7 +180,7 @@ def busContour(img1, img2):
 	closed1 = cv.medianBlur(closed1, 3)
 	retval, threshold1 = cv.threshold(closed1, 110, 255, cv.THRESH_BINARY)
 
-	contours1, hierarchy1 = cv.findContours(threshold1, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)	
+	contours1, hierarchy1 = cv.findContours(threshold1, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
 
 	for contour in contours1:
 		totalArea1 += cv.contourArea(contour)
@@ -206,7 +206,7 @@ def busContour(img1, img2):
 	closed2 = cv.morphologyEx(channel2, cv.MORPH_CLOSE, kernel)
 	closed2 = cv.medianBlur(closed2, 3)
 	retval, threshold2 = cv.threshold(closed2, 110, 255, cv.THRESH_BINARY)
-	
+
 	contours2, hierarchy2 = cv.findContours(threshold2, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
 
 	for contour in contours2:
@@ -219,12 +219,142 @@ def busContour(img1, img2):
 
 	return difference
 
+def hsvHist_beach(img1, img2):
+	width, height = img1.shape[1], img1.shape[0]
+	img2 = cv.resize(img2, (width, height))
+	sum = 0
+	total_white =0
+	total_diff=0
+	total_blue=0
+	total_sand=0
+	total_sand_a =0
+	total_sand_b=0
+	total_red=0
+
+	hsv1 = cv.cvtColor(img1,cv.COLOR_BGR2HSV)
+	hsv2 = cv.cvtColor(img2,cv.COLOR_BGR2HSV)
+	h1, s1, v1 = hsv1[:,:,0], hsv1[:,:,1], hsv1[:,:,2]
+	h2, s2, v2 = hsv2[:,:,0], hsv2[:,:,1], hsv2[:,:,2]
+	hist1 = cv.calcHist([h1], [0], None, [180], [0, 180])
+	hist2 = cv.calcHist([h2], [0], None, [180], [0, 180])
+	hist21 = cv.calcHist([s1], [0], None, [256], [0, 256])
+	hist22 = cv.calcHist([s2], [0], None, [256], [0, 256])
+
+	for i in range(0,10):
+		total_white+=hist22[i]
+	white_p=total_white/float(width * height)
+	if(white_p>0.3):
+		total_diff+=20
+	for i in range(90,130):
+		total_blue+=hist2[i]
+	blue_p=total_blue/float(width * height)
+	for i in range(15,30):
+		total_sand+=hist2[i]
+	sand_p=total_sand/float(width * height)
+	if(sand_p+blue_p<0.4):
+		total_diff+=20
+	for i in range(0,5):
+		total_red+=hist2[i]
+	for i in range(150,180):
+		total_red+=hist2[i]
+	red_p=total_red/float(width * height)
+	if(red_p>0.178):
+		total_diff+=20
+
+	# upper segment
+	img1a = img1[0:int(height/2), 0:width]
+	img2a = img2[0:int(height/2), 0:width]
+	hsv1 = cv.cvtColor(img1a,cv.COLOR_BGR2HSV)
+	hsv2 = cv.cvtColor(img2a,cv.COLOR_BGR2HSV)
+	h1, s1, v1 = hsv1[:,:,0], hsv1[:,:,1], hsv1[:,:,2]
+	h2, s2, v2 = hsv2[:,:,0], hsv2[:,:,1], hsv2[:,:,2]
+	hist1 = cv.calcHist([h1], [0], None, [180], [0, 180])
+	hist2 = cv.calcHist([h2], [0], None, [180], [0, 180])
+	hist21 = cv.calcHist([s1], [0], None, [256], [0, 256])
+	hist22 = cv.calcHist([s2], [0], None, [256], [0, 256])
+	# h channel
+	for i in range(180):
+		sum += abs(hist1[i] - hist2[i])
+	# s channel
+	for i in range(256):
+		sum += abs(hist21[i] - hist22[i])
+
+	for i in range(15,30):
+		total_sand_a+=hist2[i]
+	sand_ap=total_sand_a/float(width * height)
+
+	# lower segment
+	img1b = img1[int(height/2):height, 0:width]
+	img2b = img2[int(height/2):height, 0:width]
+	hsv1 = cv.cvtColor(img1b,cv.COLOR_BGR2HSV)
+	hsv2 = cv.cvtColor(img2b,cv.COLOR_BGR2HSV)
+	h1, s1, v1 = hsv1[:,:,0], hsv1[:,:,1], hsv1[:,:,2]
+	h2, s2, v2 = hsv2[:,:,0], hsv2[:,:,1], hsv2[:,:,2]
+	hist1 = cv.calcHist([h1], [0], None, [180], [0, 180])
+	hist2 = cv.calcHist([h2], [0], None, [180], [0, 180])
+	hist21 = cv.calcHist([s1], [0], None, [256], [0, 256])
+	hist22 = cv.calcHist([s2], [0], None, [256], [0, 256])
+	# h channel
+	for i in range(180):
+		sum += abs(hist1[i] - hist2[i])
+	# s channel
+	for i in range(256):
+		sum += abs(hist21[i] - hist22[i])
+
+	for i in range(15,30):
+		total_sand_b+=hist2[i]
+	sand_bp=total_sand_b/float(width * height)
+
+	if(sand_ap>sand_bp+0.05):
+		total_diff+=20
+
+	diff1 = compareImgs(img1, img2) * 3 / 10000000
+
+	total_diff += diff1
+	total_diff/=100
+	return total_diff
+
+def hsvHist_horse(img1, img2):
+	width, height = img1.shape[1], img1.shape[0]
+	img2 = cv.resize(img2, (width, height))
+	sum = 0
+	total_green =0
+	total_diff=0
+
+	hsv1 = cv.cvtColor(img1,cv.COLOR_BGR2HSV)
+	hsv2 = cv.cvtColor(img2,cv.COLOR_BGR2HSV)
+	h1, s1, v1 = hsv1[:,:,0], hsv1[:,:,1], hsv1[:,:,2]
+	h2, s2, v2 = hsv2[:,:,0], hsv2[:,:,1], hsv2[:,:,2]
+
+	hist1 = cv.calcHist([h1], [0], None, [180], [0, 180])
+	hist2 = cv.calcHist([h2], [0], None, [180], [0, 180])
+	hist21 = cv.calcHist([s1], [0], None, [256], [0, 256])
+	hist22 = cv.calcHist([s2], [0], None, [256], [0, 256])
+
+	for i in range(35,75):
+		total_green+=hist2[i]
+	green_p=total_green/float(width * height)
+	if(green_p<0.45):
+		add_index=20
+	else:
+		add_index=0
+
+	# h channel
+	for i in range(180):
+		sum += abs(hist1[i] - hist2[i])
+	# s channel
+	for i in range(256):
+		sum += abs(hist21[i] - hist22[i])
+	total_diff=(sum / float(width * height)) * 20 + add_index
+	total_diff/=100
+	return (total_diff)
+
 def checkMaxDifference(diffs):
-    maxValIdx = 0 
+    maxValIdx = 0
     maxVal = diffs[maxValIdx]
     i = 0
     for current in diffs:
-        # if current bigger than/equals maxVal -> replace 
+        # if current bigger than/equals maxVal -> replace
         if current >= maxVal:
             maxVal = current
             maxValIdx = i
@@ -232,11 +362,11 @@ def checkMaxDifference(diffs):
     return maxValIdx, maxVal
 
 def checkMinDifference(diffs):
-    minValIdx = 0 
+    minValIdx = 0
     minVal = diffs[minValIdx]
     i = 0
     for current in diffs:
-        # if current smaller than/equals minVal -> replace 
+        # if current smaller than/equals minVal -> replace
         if current <= minVal:
             minVal = current
             minValIdx = i
@@ -279,7 +409,7 @@ def retrieval(retrieval_amount):
 	if choice == '7':
 		chosenCategory = 1
 		src_input = cv.imread("man.jpg")
-		print("You choose: %s - man\n" % choice)	
+		print("You choose: %s - man\n" % choice)
 
 	min_diff = 1e50
 
@@ -300,10 +430,10 @@ def retrieval(retrieval_amount):
 	# initialize maxVal
 	maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	diff = 0
- 
+
 	if choice == '7':
 		faces_amount = []
-		id_img_w_faces = []		
+		id_img_w_faces = []
 		i = 0
 
 		for img in database:
@@ -316,7 +446,7 @@ def retrieval(retrieval_amount):
 			if len(faces)>0:
 				faces_amount.append(len(faces)) # how many faces found in img
 				id_img_w_faces.append(img) # save img name
-     
+
 		for img in id_img_w_faces:
 			img_rgb = cv.imread(img)
 			diff = compareImgs_hist(src_input, img_rgb)
@@ -329,16 +459,19 @@ def retrieval(retrieval_amount):
 					result[maxValIdx] = img
 					# update max difference in min_diffs array
 					maxValIdx, maxVal = checkMaxDifference(min_diffs)
-   
+
 	else: # choice is not human, we use other algorithms
 		for img in database:
 			# read image
 			img_rgb = cv.imread(img)
 			# convert to gray scale
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-			
+
 			# compare the two images
-			if choice == '1' or choice == '2': #beach, building
+			if choice == '1': #beach
+				diff = diff = hsvHist_beach(src_input, img_rgb)
+
+			elif choice == '2': #building
 				diff = compareImgs(src_gray, img_gray)
 
 			elif choice == '3': #bus
@@ -351,7 +484,7 @@ def retrieval(retrieval_amount):
 				diff = flowerContour(src_input, img_rgb)
 
 			elif choice == '6': #horse
-				diff = compareImgs(src_input, img_rgb)
+				diff = hsvHist_horse(src_input, img_rgb)
 
 			print(img, diff)
 			# find the minimum difference
@@ -387,9 +520,9 @@ def retrieval(retrieval_amount):
 	for i in retrieved_images:
 		if i in range((chosenCategory * 100) - 100, (chosenCategory * 100) - 1):
 			inCategory += 1
-	recall_rate = inCategory * 1.0 	
+	recall_rate = inCategory * 1.0
 	precision_rate = inCategory / retrieval_amount * 100.0
-	
+
 	# print the recall and precision rate
 	print("\n")
 	print("Recall Rate: " + str(recall_rate) + "%")
@@ -397,11 +530,11 @@ def retrieval(retrieval_amount):
 
 	cv.waitKey(0)
 	cv.destroyAllWindows()
- 
+
 def compute_SIFTdiff(img1, img2):
 	#-- Step 1: Detect the keypoints using SIFT Detector, compute the descriptors
 	minHessian = 400
-	detector = cv.SIFT_create() 
+	detector = cv.SIFT_create()
 	#detector = cv.xfeatures2d.BEBLID_create(0.75)
 	keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
 	keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
@@ -461,7 +594,7 @@ def SIFT():
 	#-- Show detected matches
 	cv.imshow('Good Matches: SIFT (Python)', img_matches)
 	cv.waitKey()
- 
+
 def retrieve_threshold(threshold):
 	print("1: beach")
 	print("2: building")
@@ -505,7 +638,7 @@ def retrieve_threshold(threshold):
 		category_name = "man"
 		chosenCategory = 1
 		src_input = cv.imread("man.jpg")
-		print("You choose: %s - man\n" % choice)	
+		print("You choose: %s - man\n" % choice)
 
 	min_diff = 1e50
 
@@ -523,14 +656,14 @@ def retrieve_threshold(threshold):
 	min_diffs = []
 	closest_imgs = []
 	result = []
- 
-	diff = 0
- 
-	if choice == '7': # choice is human, we need face detector 
-		faces_amount = []
-		id_img_w_faces = []	
 
-		diffSum = 0 
+	diff = 0
+
+	if choice == '7': # choice is human, we need face detector
+		faces_amount = []
+		id_img_w_faces = []
+
+		diffSum = 0
 		minDiff_thres = 999999999
 		maxDiff_thres = 0
 
@@ -549,13 +682,13 @@ def retrieve_threshold(threshold):
 			img_rgb = cv.imread(img)
 			diff = compareImgs_hist(src_input, img_rgb)
 
-			# Necessary parameteres to compute threshold 
+			# Necessary parameteres to compute threshold
 			diffSum += diff
 			if diff <= minDiff_thres:
 				minDiff_thres = diff
 			if diff >= maxDiff_thres:
 				maxDiff_thres = diff
-    
+
 		thresValue = computeAllowedDiff(diffSum, minDiff_thres, maxDiff_thres, threshold)
 		for img in id_img_w_faces:
 			img_rgb = cv.imread(img)
@@ -567,15 +700,18 @@ def retrieve_threshold(threshold):
 				closest_imgs.append(img_rgb)
 
 	else: # choice is not human, we use other algorithms
-		diffSum = 0 
+		diffSum = 0
 		minDiff_thres = 999999999
 		maxDiff_thres = 0
 		for img in database:
 			img_rgb = cv.imread(img)
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-			
+
 			# compare the two images
-			if choice == '1' or choice == '2': # beach, building
+			if choice == '1': #beach
+				diff = diff = hsvHist_beach(src_input, img_rgb)
+
+			elif choice == '2': #building
 				diff = compareImgs(src_gray, img_gray)
 
 			elif choice == '3': #bus
@@ -588,16 +724,16 @@ def retrieve_threshold(threshold):
 				diff = flowerContour(src_input, img_rgb)
 
 			elif choice == '6': #horse
-				diff = compareImgs(src_input, img_rgb)
+				diff = hsvHist_horse(src_input, img_rgb)
 
 			print(img, diff)
-       
+
 			diffSum += diff
 			if diff <= minDiff_thres:
 				minDiff_thres = diff
 			elif diff >= maxDiff_thres:
 				maxDiff_thres = diff
-		
+
 		thresValue = computeAllowedDiff(diffSum, minDiff_thres, maxDiff_thres, threshold)
 		print("thresValue", thresValue)
 
@@ -605,9 +741,12 @@ def retrieve_threshold(threshold):
 			img_rgb = cv.imread(img)
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 
-			if choice == '1' or choice == '2':
+			if choice == '1': #beach
+				diff = diff = hsvHist_beach(src_input, img_rgb)
+
+			elif choice == '2': #building
 				diff = compareImgs(src_gray, img_gray)
-			
+
 			elif choice == '3': # bus
 				diff = compareImgs_hist(src_gray, img_gray)
 
@@ -618,7 +757,7 @@ def retrieve_threshold(threshold):
 				diff = flowerContour(src_input, img_rgb)
 
 			elif choice == '6': # horse
-				diff = compareImgs(src_input, img_rgb)
+				diff = hsvHist_horse(src_input, img_rgb)
 
 			# check if current difference <= threshold and append to result if so.
 			if choice == '1' or choice == '2' or choice == '3' or choice == '4' or choice == '5' or choice == '6':
@@ -626,7 +765,7 @@ def retrieve_threshold(threshold):
 					min_diffs.append(diff)
 					result.append(img)
 					closest_imgs.append(img_rgb)
-   
+
     # initializing list of retrieved images
 	retrieved_images = []
 
@@ -650,12 +789,12 @@ def retrieve_threshold(threshold):
 	for i in retrieved_images:
 		if i in range((chosenCategory * 100) - 100, (chosenCategory * 100) - 1):
 			inCategory += 1
-	recall_rate = inCategory * 1.0 	
+	recall_rate = inCategory * 1.0
 	if len(result)>0:
-		precision_rate = inCategory / len(result) * 100.0 
+		precision_rate = inCategory / len(result) * 100.0
 	else:
 		precision_rate = 0
-	
+
 	for img_name in result:
 		if len(img_name) == 18:
 			img_num = img_name[11:18]
@@ -668,7 +807,7 @@ def retrieve_threshold(threshold):
 		isWritten = cv.imwrite(img_path, img)
 		if isWritten:
 			print('Image ', img_name ,' is successfully saved.')
- 
+
 	# print the recall and precision rate
 	print("\n")
 	print("Recall Rate: " + str(recall_rate) + "%")
@@ -676,12 +815,12 @@ def retrieve_threshold(threshold):
 
 	cv.waitKey(0)
 	cv.destroyAllWindows()
- 
+
 def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
     mean = diffSum/1000
     diffRange = maxDiff - minDiff
     return (diffRange * threshold)
-	
+
 def main():
 
 	print("1: Retrieve certain amount of images")
