@@ -621,7 +621,7 @@ def retrieve_threshold(threshold):
 				diff = compareImgs(src_input, img_rgb)
 
 			# check if current difference <= threshold and append to result if so.
-			if choice == '1' or choice == '2' or choice == '4' or choice == '5' or choice == '6':
+			if choice == '1' or choice == '2' or choice == '3' or choice == '4' or choice == '5' or choice == '6':
 				if diff <= thresValue:
 					min_diffs.append(diff)
 					result.append(img)
