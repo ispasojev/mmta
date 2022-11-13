@@ -27,15 +27,6 @@ def compareImgs_hist(img1, img2):
 	hist1 = [0] * num_bins
 	hist2 = [0] * num_bins
 	bin_width = 255.0 / num_bins + 1e-4
-	# compute histogram from scratch
-
-	# for w in range(width):
-	# 	for h in range(height):
-	# 		hist1[int(img1[h, w] / bin_width)] += 1
-	# 		hist2[int(img2[h, w] / bin_width)] += 1
-
-	# compute histogram by using opencv function
-	# https://docs.opencv.org/4.x/d6/dc7/group__imgproc__hist.html#ga4b2b5fd75503ff9e6844cc4dcdaed35d
 
 	hist1 = cv.calcHist([img1], [0], None, [num_bins], [0, 255])
 	hist2 = cv.calcHist([img2], [0], None, [num_bins], [0, 255])
@@ -110,13 +101,13 @@ def hsvHist_beach(img1, img2):
 	width, height = img1.shape[1], img1.shape[0]
 	img2 = cv.resize(img2, (width, height))
 	sum = 0
-	total_white =0
-	total_diff=0
-	total_blue=0
-	total_sand=0
-	total_sand_a =0
-	total_sand_b=0
-	total_red=0
+	total_white = 0
+	total_diff= 0
+	total_blue= 0
+	total_sand= 0
+	total_sand_a = 0
+	total_sand_b = 0
+	total_red = 0
 
 	hsv1 = cv.cvtColor(img1,cv.COLOR_BGR2HSV)
 	hsv2 = cv.cvtColor(img2,cv.COLOR_BGR2HSV)
@@ -278,19 +269,6 @@ def compute_SIFTdiff(img1, img2):
 	good_matches = tuple(filter(lambda x:x.distance <= 1.2 * min_dist, matches)) #TODO: parameter adaptable
 	return len(good_matches)
 
-def compute_ORBdiff(img1, img2):
-	detector = cv.ORB_create(nfeatures=500) #ORB better for flowers with 1.2*min_dist and blurred src_input, n_features=500
-	keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
-	keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
-
-	matcher = cv.DescriptorMatcher_create(cv.DescriptorMatcher_BRUTEFORCE)
-	matches = matcher.match(descriptors1, descriptors2)
-
-	matches = sorted(matches, key = lambda x:x.distance)
-	min_dist = matches[0].distance
-	good_matches = tuple(filter(lambda x:x.distance <= 1.2 * min_dist, matches))
-	return len(good_matches)
-
 def SIFT():
 	img1 = cv.imread("flower.jpg")
 	img2 = cv.imread("image.orig/685.jpg")
@@ -324,7 +302,7 @@ def SIFT():
 	cv.imshow('Good Matches: SIFT (Python)', img_matches)
 	cv.waitKey()
 
-def most_similar():
+def most_similar(choice):
 	print("Take the most similar image for categories: ")
 	print("1: beach")
 	print("2: building")
@@ -333,7 +311,6 @@ def most_similar():
 	print("5: flower")
 	print("6: horse")
 	print("7: man")
-	choice = input("Select category number: ")
 	if choice == '1':
 		src_input = cv.imread("beach.jpg")
 		print("You choose: %s - beach\n" % choice)
@@ -356,21 +333,22 @@ def most_similar():
 		src_input = cv.imread("man.jpg")
 		print("You choose: %s - man\n" % choice)
 
-	# src_input = cv.imread("man.jpg")
-	cv.imshow("Input", src_input)
 	# change the image to gray scale
 	src_gray = cv.cvtColor(src_input, cv.COLOR_BGR2GRAY)
+
 	# read image database
 	database = sorted(glob(database_dir + "/*.jpg"), key = len)
+
 	# initialize arrays for fixed size of retrieval_amount
 	min_diffs = [999999999.0] 
 	closest_imgs = [0]
 	result = [0]
+
 	# initialize max val
 	maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	diff = 0
  
-	if choice == '7':
+	if choice == '7': # choice is human, we need face detector
 		faces_amount = []
 		id_img_w_faces = []		
 		id_img_w_faces = []
@@ -379,6 +357,7 @@ def most_similar():
 		for img in database:
 			img_rgb = cv.imread(img)
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+
 			# face detection
 			face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
 			faces = face_cascade.detectMultiScale(img_gray, 1.1, 4)
@@ -386,7 +365,6 @@ def most_similar():
 				faces_amount.append(len(faces)) # how many faces found in img
 				id_img_w_faces.append(img) # save img name
      
-
 		for img in id_img_w_faces:
 			img_rgb = cv.imread(img)
 			diff = compareImgs_hist(src_input, img_rgb)
@@ -402,9 +380,7 @@ def most_similar():
 
 	else: # choice is not human, we use other algorithms
 		for img in database:
-			# read image
 			img_rgb = cv.imread(img)
-			# convert to gray scale
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 			
 			# compare the two images
@@ -453,10 +429,10 @@ def most_similar():
 		retrieved_images.append(img_id)
 		j+=1
 
-	cv.waitKey(0)
-	cv.destroyAllWindows()
+	return closest_imgs[0]
 
 def retrieve_images(choice):
+	print("Take the most similar images for categories: ")
 	print("1: beach")
 	print("2: building")
 	print("3: bus")
@@ -506,8 +482,6 @@ def retrieve_images(choice):
 		threshold = 0.45
 		src_input = cv.imread("man.jpg")
 		print("You choose: %s - man\n" % choice)
-
-	# src_input = cv.imread("man.jpg")
 
 	cv.imshow("Input", src_input)
 
@@ -685,7 +659,7 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
     diffRange = maxDiff - minDiff
     return (diffRange * threshold)
 
-def gui():
+def main():
 	# initialize the gui
 	root = Tk()
 	root.geometry("1280x720")
@@ -693,7 +667,7 @@ def gui():
 	root.title("CS4185 Image Retrieval")
 
 	# run the image retrieval through the gui
-	def retrieveImage():
+	def retrieveImages():
 		input = str(category.get())
 		
 		# show the precision and recall rate in the gui
@@ -702,6 +676,12 @@ def gui():
 		categoryDisplay.config(text="Category = " + category_name)
 		precisionDisplay.config(text="Precision Rate = " + str(precisionrate) + "%")
 		recallDisplay.config(text="Recall Rate = " + str(recallrate) + "%")
+	
+	def retrieveClosestImage():
+		input = str(category.get())
+
+		# show the most similar image
+		most_similar(input)
 
 	# show the categories in the gui
 	categories = [
@@ -724,7 +704,7 @@ def gui():
 	exitButtonDisplay = Button(root, text="Exit Program", font=("Calibri", 15), command=root.destroy)
 
 	for text, categoryName in categories:
-		Radiobutton(root, text=text, variable=category, value=categoryName, command=lambda: [retrieveImage()], 
+		Radiobutton(root, text=text, variable=category, value=categoryName, command=lambda: [retrieveClosestImage(), retrieveImages()], 
 		bg="#e3fffd", activebackground="#ffd3bf", font=("Calibri", 15)).pack(anchor=NW)
 
 	categoryDisplay.pack(anchor=W)
@@ -733,8 +713,4 @@ def gui():
 	exitButtonDisplay.pack(pady=20)
 
 	mainloop()
-
-def main():
-	most_similar()
-	gui()
 main()
