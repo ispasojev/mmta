@@ -588,17 +588,15 @@ def main():
 	category = IntVar()
 	category.set(0)
 
+	# initialize the labels
 	categoryDisplay = Label(root, text="Category = ", font=("Calibri", 15), bg="#e3fffd")
-
 	precisionDisplay = Label(root, text="Precision Rate = % ", font=("Calibri", 15), bg="#e3fffd")
-
 	recallDisplay = Label(root, text="Recall Rate = % ", font=("Calibri", 15), bg="#e3fffd")
-
 	exitButtonDisplay = Button(root, text="Exit Program", font=("Calibri", 15), command=root.destroy)
 
 	for text, categoryName in categories:
-		Radiobutton(root, text=text, variable=category, value=categoryName, command=lambda: [retrieveImage()], bg="#e3fffd", 
-		activebackground="#ffd3bf", font=("Calibri", 15)).pack(anchor=W)
+		Radiobutton(root, text=text, variable=category, value=categoryName, command=lambda: [retrieveImage()], 
+		bg="#e3fffd", activebackground="#ffd3bf", font=("Calibri", 15)).pack(anchor=NW)
 
 	categoryDisplay.pack(anchor=W)
 	precisionDisplay.pack(anchor=W)
