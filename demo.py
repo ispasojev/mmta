@@ -324,7 +324,16 @@ def SIFT():
 	cv.imshow('Good Matches: SIFT (Python)', img_matches)
 	cv.waitKey()
 
-def most_similar(choice):
+def most_similar():
+	print("Take the most similar image for categories: ")
+	print("1: beach")
+	print("2: building")
+	print("3: bus")
+	print("4: dinosaur")
+	print("5: flower")
+	print("6: horse")
+	print("7: man")
+	choice = input("Select category number: ")
 	if choice == '1':
 		src_input = cv.imread("beach.jpg")
 		print("You choose: %s - beach\n" % choice)
@@ -676,19 +685,7 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
     diffRange = maxDiff - minDiff
     return (diffRange * threshold)
 
-def main():
-
-	print("Take the most similar image for categories: ")
-	print("1: beach")
-	print("2: building")
-	print("3: bus")
-	print("4: dinosaur")
-	print("5: flower")
-	print("6: horse")
-	print("7: man")
-	choice = input("Select category number: ")
-	most_similar(choice)
-
+def gui():
 	# initialize the gui
 	root = Tk()
 	root.geometry("1280x720")
@@ -737,4 +734,7 @@ def main():
 
 	mainloop()
 
+def main():
+	most_similar()
+	gui()
 main()
