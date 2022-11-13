@@ -662,7 +662,7 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
 def main():
 	# initialize the gui
 	root = Tk()
-	root.geometry("1280x720")
+	root.geometry("600x520")
 	root.configure(bg="#e3fffd")
 	root.title("CS4185 Image Retrieval")
 
