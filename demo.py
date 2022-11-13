@@ -324,6 +324,129 @@ def SIFT():
 	cv.imshow('Good Matches: SIFT (Python)', img_matches)
 	cv.waitKey()
 
+def most_similar(choice):
+	if choice == '1':
+		src_input = cv.imread("beach.jpg")
+		print("You choose: %s - beach\n" % choice)
+	if choice == '2':
+		src_input = cv.imread("building.jpg")
+		print("You choose: %s - building\n" % choice)
+	if choice == '3':
+		src_input = cv.imread("bus.jpg")
+		print("You choose: %s - bus\n" % choice)
+	if choice == '4':
+		src_input = cv.imread("dinosaur.jpg")
+		print("You choose: %s - dinosaur\n" % choice)
+	if choice == '5':
+		src_input = cv.imread("flower.jpg")
+		print("You choose: %s - flower\n" % choice)
+	if choice == '6':
+		src_input = cv.imread("horse.jpg")
+		print("You choose: %s - horse\n" % choice)
+	if choice == '7':
+		src_input = cv.imread("man.jpg")
+		print("You choose: %s - man\n" % choice)
+
+	# src_input = cv.imread("man.jpg")
+	cv.imshow("Input", src_input)
+	# change the image to gray scale
+	src_gray = cv.cvtColor(src_input, cv.COLOR_BGR2GRAY)
+	# read image database
+	database = sorted(glob(database_dir + "/*.jpg"), key = len)
+	# initialize arrays for fixed size of retrieval_amount
+	min_diffs = [999999999.0] 
+	closest_imgs = [0]
+	result = [0]
+	# initialize max val
+	maxValIdx, maxVal = checkMaxDifference(min_diffs)
+	diff = 0
+ 
+	if choice == '7':
+		faces_amount = []
+		id_img_w_faces = []		
+		id_img_w_faces = []
+		i = 0
+
+		for img in database:
+			img_rgb = cv.imread(img)
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+			# face detection
+			face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
+			faces = face_cascade.detectMultiScale(img_gray, 1.1, 4)
+			if len(faces)>0:
+				faces_amount.append(len(faces)) # how many faces found in img
+				id_img_w_faces.append(img) # save img name
+     
+
+		for img in id_img_w_faces:
+			img_rgb = cv.imread(img)
+			diff = compareImgs_hist(src_input, img_rgb)
+			if diff <= maxVal:
+					# update the minimum difference
+					min_diffs[maxValIdx] = diff
+					# update the most similar image
+					closest_imgs[maxValIdx] = img_rgb
+					result[maxValIdx] = img
+					# update max difference in min_diffs array
+					maxValIdx, maxVal = checkMaxDifference(min_diffs)
+   
+
+	else: # choice is not human, we use other algorithms
+		for img in database:
+			# read image
+			img_rgb = cv.imread(img)
+			# convert to gray scale
+			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
+			
+			# compare the two images
+			if choice == '1': #beach
+				diff = diff = hsvHist_beach(src_input, img_rgb)
+
+			elif choice == '2': #building
+				diff = compareImgs(src_gray, img_gray)
+
+			elif choice == '3': #bus
+				diff = compareImgs_hist(src_gray, img_gray)
+
+			elif choice == '4': # dinosaur
+				diff = compareImgs(src_gray, img_gray)
+
+			elif choice == '5': #flower
+				diff = flowerContour(src_input, img_rgb)
+
+			elif choice == '6': #horse
+				diff = hsvHist_horse(src_input, img_rgb)
+
+			print(img, diff)
+			# find the minimum difference
+			if diff <= maxVal:
+				# update the minimum difference
+				min_diffs[maxValIdx] = diff
+				# update the most similar image
+				closest_imgs[maxValIdx] = img_rgb
+				result[maxValIdx] = img
+				# update max difference in min_diffs array
+				maxValIdx, maxVal = checkMaxDifference(min_diffs)
+	# initializing list of retrieved images
+	retrieved_images = []
+	# formula to take multiple images
+	j=0
+	img_id = 0
+	for img in closest_imgs:
+		print("The most similar image is %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
+		if len(result[j]) == 18:
+			img_id = int(result[j][11:14])
+		if len(result[j]) == 17:
+			img_id = int(result[j][11:13])
+		if len(result[j]) == 16:
+			img_id = int(result[j][11:12])
+		cv.imshow("Most Similar Image ", closest_imgs[j])
+		retrieved_images.append(img_id)
+		j+=1
+
+	cv.waitKey(0)
+	cv.destroyAllWindows()
+
 def retrieve_images(choice):
 	print("1: beach")
 	print("2: building")
@@ -374,8 +497,6 @@ def retrieve_images(choice):
 		threshold = 0.45
 		src_input = cv.imread("man.jpg")
 		print("You choose: %s - man\n" % choice)
-
-	min_diff = 1e50
 
 	# src_input = cv.imread("man.jpg")
 
@@ -444,7 +565,7 @@ def retrieve_images(choice):
 
 			# compare the two images
 			if choice == '1': #beach
-				diff = diff = hsvHist_beach(src_input, img_rgb)
+				diff = hsvHist_beach(src_input, img_rgb)
 
 			elif choice == '2': #building
 				diff = compareImgs(src_gray, img_gray)
@@ -477,7 +598,7 @@ def retrieve_images(choice):
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
 
 			if choice == '1': #beach
-				diff = diff = hsvHist_beach(src_input, img_rgb)
+				diff = hsvHist_beach(src_input, img_rgb)
 
 			elif choice == '2': #building
 				diff = compareImgs(src_gray, img_gray)
@@ -508,7 +629,7 @@ def retrieve_images(choice):
 	j=0
 	img_id = 0
 	for img in closest_imgs:
-		print("the most similar images are %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
+		print("The similar images according to the algorithm are %s, the pixel-by-pixel difference is %f " % (result[j], min_diffs[j]))
 		if len(result[j]) == 18:
 			img_id = int(result[j][11:14])
 		if len(result[j]) == 17:
@@ -556,6 +677,17 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
     return (diffRange * threshold)
 
 def main():
+
+	print("Take the most similar image for categories: ")
+	print("1: beach")
+	print("2: building")
+	print("3: bus")
+	print("4: dinosaur")
+	print("5: flower")
+	print("6: horse")
+	print("7: man")
+	choice = input("Select category number: ")
+	most_similar(choice)
 
 	# initialize the gui
 	root = Tk()
