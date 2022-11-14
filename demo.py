@@ -619,7 +619,7 @@ def retrieve_images(choice):
 			img_id = int(result[j][11:13])
 		if len(result[j]) == 16:
 			img_id = int(result[j][11:12])
-		cv.imshow("Result " + str(j), closest_imgs[j])
+		#cv.imshow("Result " + str(j), closest_imgs[j])
 		retrieved_images.append(img_id)
 		j+=1
 
