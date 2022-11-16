@@ -24,7 +24,7 @@ inputImage = None
 def main():
 	# initialize the gui
 	root = Tk()
-	root.geometry("1200x800")
+	root.geometry("1300x800")
 	root.configure(bg="#D0D0D0") # GUI bg
 	root.title("CS4185 Image Retrieval")
 
@@ -72,19 +72,19 @@ def main():
 
 	global imageCanvas
 	imageCanvas = Canvas(root, width = 250, height = 160)
-	imageCanvas.place(x=600, y=70)
+	imageCanvas.place(x=700, y=70)
 	imageCanvas.configure(bg="#A1A1A1")
 
 	global imageCanvas2
 	imageCanvas2 = Canvas(root, width = 250, height = 160)
-	imageCanvas2.place(x=300, y=70)
+	imageCanvas2.place(x=400, y=70)
 	imageCanvas2.configure(bg="#A1A1A1")
 
 	# display all the retrieved images
 	global imageListContainer
 	imageListContainer = ScrolledText(root, wrap=WORD, width=120, height=35)
 	imageListContainer.grid(row=2, column=5, padx=25, pady=10)
-	imageListContainer.place(x=270, y=300)
+	imageListContainer.place(x=370, y=300)
 	imageListContainer.images = []
 	imageListContainer.configure(bg="#A1A1A1")
 
@@ -97,11 +97,11 @@ def main():
 		Radiobutton(root, text=text, variable=category, value=categoryName, command=lambda: [retrieveClosestImage(), retrieveImages()], bg="#D0D0D0", fg="#000000", font=("Calibri", 18)).place(x=65, y = 70*(i+1)+100)
 
 	categoryDisplay.place(x=30,y=100)
-	inputImage.place(x=370,y=30)
-	mostSimilarImage.place(x=620,y=30)
-	precisionDisplay.place(x=900,y=120)
-	recallDisplay.place(x=900,y=170)
-	retrievedImageText.place(x=280, y=260)
+	inputImage.place(x=470,y=30)
+	mostSimilarImage.place(x=720,y=30)
+	precisionDisplay.place(x=1000,y=120)
+	recallDisplay.place(x=1000,y=170)
+	retrievedImageText.place(x=380, y=260)
 
 	mainloop()
 
@@ -749,7 +749,7 @@ def retrieve_images(choice):
 		# imageListContainer.insert(INSERT, str(j))	# insert text
 		imageListContainer.image_create(INSERT, padx=8, pady=8, image=imgTk)	# insert image
 		imageListContainer.images.append(imgTk)
-		
+
 		retrieved_images.append(img_id)
 		j+=1
 
