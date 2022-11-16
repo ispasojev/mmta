@@ -9,9 +9,101 @@ from tkinter import *
 import tkinter as tk
 import os
 from glob import glob
+from tkinter.scrolledtext import ScrolledText
+from PIL import Image, ImageTk
 
 # the directory of the image database
 database_dir = "image.orig"
+
+imageListContainer = None
+imageCanvas = None
+mSImage = None
+imageCanvas2 = None
+inputImage = None
+
+def main():
+	# initialize the gui
+	root = Tk()
+	root.geometry("1200x800")
+	root.configure(bg="#D0D0D0") # GUI bg
+	root.title("CS4185 Image Retrieval")
+
+	# run the image retrieval through the gui
+	def retrieveImages():
+		input = str(category.get())
+
+		# show the precision and recall rate in the gui
+		category_name, precisionrate, recallrate = retrieve_images(input)
+
+		categoryDisplay.config(text="Category '" + category_name + "' is selected")
+		precisionDisplay.config(text="Precision Rate = " + str(precisionrate) + "%")
+		recallDisplay.config(text="Recall Rate = " + str(recallrate) + "%")
+
+	# display the most similar image
+	global mSImage
+	global inputImage
+
+	def retrieveClosestImage():
+		input = str(category.get())
+		# show the most similar image
+		most_similar(input)
+
+	# show the categories in the gui
+	categories = [
+		("Beach", 1),
+		("Building", 2),
+		("Bus", 3),
+		("Dinosaur", 4),
+		("Flower", 5),
+		("Horse", 6),
+		("Man", 7)
+	]
+
+	category = IntVar()
+	category.set(0)
+
+	# initialize the labels
+	categoryDisplay = Label(root, text="Please Select a Category:", font=("Calibri", 18), bg="#D0D0D0", fg="#000000", padx=10)
+	precisionDisplay = Label(root, text="Precision Rate = ____ %", font=("Calibri", 15), bg="#D0D0D0", fg="#000000", padx=10)
+	recallDisplay = Label(root, text="Precision Rate = ____ %", font=("Calibri", 15), bg="#D0D0D0", fg="#000000", padx=10)
+	inputImage = Label(root, text="Input Image:", font=("Calibri", 20), bg="#D0D0D0", fg="#000000")
+	mostSimilarImage = Label(root, text="The Most Similar Image:", font=("Calibri", 20), bg="#D0D0D0", fg="#000000")
+	retrievedImageText = Label(root, text="All The Retrieved Images:", font=("Calibri", 20), bg="#D0D0D0", fg="#000000")
+
+	global imageCanvas
+	imageCanvas = Canvas(root, width = 250, height = 160)
+	imageCanvas.place(x=600, y=70)
+	imageCanvas.configure(bg="#A1A1A1")
+
+	global imageCanvas2
+	imageCanvas2 = Canvas(root, width = 250, height = 160)
+	imageCanvas2.place(x=300, y=70)
+	imageCanvas2.configure(bg="#A1A1A1")
+
+	# display all the retrieved images
+	global imageListContainer
+	imageListContainer = ScrolledText(root, wrap=WORD, width=120, height=35)
+	imageListContainer.grid(row=2, column=5, padx=25, pady=10)
+	imageListContainer.place(x=270, y=300)
+	imageListContainer.images = []
+	imageListContainer.configure(bg="#A1A1A1")
+
+	# exit program btn
+	exitButtonDisplay = Button(root, text="Exit Program", font=("Calibri", 22), command=root.destroy, fg="#000000")
+	exitButtonDisplay.place(x=50, y=675)
+
+	# radio btn - image list
+	for i, (text, categoryName) in enumerate(categories):
+		Radiobutton(root, text=text, variable=category, value=categoryName, command=lambda: [retrieveClosestImage(), retrieveImages()], bg="#D0D0D0", fg="#000000", font=("Calibri", 18)).place(x=65, y = 70*(i+1)+100)
+
+	categoryDisplay.place(x=30,y=100)
+	inputImage.place(x=370,y=30)
+	mostSimilarImage.place(x=620,y=30)
+	precisionDisplay.place(x=900,y=120)
+	recallDisplay.place(x=900,y=170)
+	retrievedImageText.place(x=280, y=260)
+
+	mainloop()
 
 # Compute pixel-by-pixel difference and return the sum
 def compareImgs(img1, img2):
@@ -336,21 +428,23 @@ def most_similar(choice):
 	# change the image to gray scale
 	src_gray = cv.cvtColor(src_input, cv.COLOR_BGR2GRAY)
 
+	w, h = src_input.shape[1], src_input.shape[0]
+
 	# read image database
 	database = sorted(glob(database_dir + "/*.jpg"), key = len)
 
 	# initialize arrays for fixed size of retrieval_amount
-	min_diffs = [999999999.0] 
+	min_diffs = [999999999.0]
 	closest_imgs = [0]
 	result = [0]
 
 	# initialize max val
 	maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	diff = 0
- 
+
 	if choice == '7': # choice is human, we need face detector
 		faces_amount = []
-		id_img_w_faces = []		
+		id_img_w_faces = []
 		id_img_w_faces = []
 		i = 0
 
@@ -364,7 +458,7 @@ def most_similar(choice):
 			if len(faces)>0:
 				faces_amount.append(len(faces)) # how many faces found in img
 				id_img_w_faces.append(img) # save img name
-     
+
 		for img in id_img_w_faces:
 			img_rgb = cv.imread(img)
 			diff = compareImgs_hist(src_input, img_rgb)
@@ -376,13 +470,12 @@ def most_similar(choice):
 					result[maxValIdx] = img
 					# update max difference in min_diffs array
 					maxValIdx, maxVal = checkMaxDifference(min_diffs)
-   
 
 	else: # choice is not human, we use other algorithms
 		for img in database:
 			img_rgb = cv.imread(img)
 			img_gray = cv.cvtColor(img_rgb, cv.COLOR_BGR2GRAY)
-			
+
 			# compare the two images
 			if choice == '1': #beach
 				diff = diff = hsvHist_beach(src_input, img_rgb)
@@ -414,6 +507,22 @@ def most_similar(choice):
 				maxValIdx, maxVal = checkMaxDifference(min_diffs)
 	# initializing list of retrieved images
 	retrieved_images = []
+
+	# GUI - the input image
+	global inputImage
+	global imageCanvas2
+	if inputImage is not None:
+		imageCanvas2.delete("all")
+	inputImage = Image.fromarray(np.stack((src_input[...,2], src_input[...,1], src_input[...,0]), axis=-1)).resize((int((w/h)*140), 140), Image.ANTIALIAS)
+	inputImage=ImageTk.PhotoImage(inputImage)
+	imageCanvas2.create_image(15, 10, anchor=NW, image=inputImage)
+
+	# GUI - the closest images
+	global mSImage
+	global imageCanvas
+	if mSImage is not None:
+		imageCanvas.delete("all")
+
 	# formula to take multiple images
 	j=0
 	img_id = 0
@@ -425,7 +534,13 @@ def most_similar(choice):
 			img_id = int(result[j][11:13])
 		if len(result[j]) == 16:
 			img_id = int(result[j][11:12])
-		cv.imshow("Most Similar Image ", closest_imgs[j])
+		# cv.imshow("Most Similar Image ", closest_imgs[j])
+		w, h = img.shape[1], img.shape[0]
+		# global imageCanvas
+		mSImage = Image.fromarray(np.stack((img[...,2], img[...,1], img[...,0]), axis=-1)).resize((int((w/h)*140), 140), Image.ANTIALIAS) # convert the numpy array to PIL image format
+		mSImage=ImageTk.PhotoImage(mSImage)
+		imageCanvas.create_image(15, 10, anchor=NW, image=mSImage)	# insert image
+
 		retrieved_images.append(img_id)
 		j+=1
 
@@ -483,7 +598,7 @@ def retrieve_images(choice):
 		src_input = cv.imread("man.jpg")
 		print("You choose: %s - man\n" % choice)
 
-	cv.imshow("Input", src_input)
+	# cv.imshow("Input", src_input)
 
 	# change the image to gray scale
 	src_gray = cv.cvtColor(src_input, cv.COLOR_BGR2GRAY)
@@ -608,6 +723,11 @@ def retrieve_images(choice):
     # initializing list of retrieved images
 	retrieved_images = []
 
+	# GUI - all the retrieved images
+	global imageListContainer
+	imageListContainer.images.clear()
+	imageListContainer.delete('1.0', END)  # Clear current contents.
+
 	# formula to take multiple images
 	j=0
 	img_id = 0
@@ -620,6 +740,16 @@ def retrieve_images(choice):
 		if len(result[j]) == 16:
 			img_id = int(result[j][11:12])
 		#cv.imshow("Result " + str(j), closest_imgs[j])
+		w, h = img.shape[1], img.shape[0]
+
+		# GUI - insert images into list
+		imgTk = Image.fromarray(np.stack((img[...,2], img[...,1], img[...,0]), axis=-1)).resize((int(w*0.4), int(h*0.4)), Image.ANTIALIAS) # convert the numpy array to PIL image format
+		imgTk = ImageTk.PhotoImage(imgTk)
+
+		# imageListContainer.insert(INSERT, str(j))	# insert text
+		imageListContainer.image_create(INSERT, padx=8, pady=8, image=imgTk)	# insert image
+		imageListContainer.images.append(imgTk)
+		
 		retrieved_images.append(img_id)
 		j+=1
 
@@ -659,58 +789,4 @@ def computeAllowedDiff(diffSum, minDiff, maxDiff, threshold):
     diffRange = maxDiff - minDiff
     return (diffRange * threshold)
 
-def main():
-	# initialize the gui
-	root = Tk()
-	root.geometry("600x520")
-	root.configure(bg="#e3fffd")
-	root.title("CS4185 Image Retrieval")
-
-	# run the image retrieval through the gui
-	def retrieveImages():
-		input = str(category.get())
-		
-		# show the precision and recall rate in the gui
-		category_name, precisionrate, recallrate = retrieve_images(input)
-
-		categoryDisplay.config(text="Category = " + category_name)
-		precisionDisplay.config(text="Precision Rate = " + str(precisionrate) + "%")
-		recallDisplay.config(text="Recall Rate = " + str(recallrate) + "%")
-	
-	def retrieveClosestImage():
-		input = str(category.get())
-
-		# show the most similar image
-		most_similar(input)
-
-	# show the categories in the gui
-	categories = [
-		("Beach", 1),
-		("Building", 2),
-		("Bus", 3),
-		("Dinosaur", 4),
-		("Flower", 5),
-		("Horse", 6),
-		("Man", 7)
-	]
-
-	category = IntVar()
-	category.set(0)
-
-	# initialize the labels
-	categoryDisplay = Label(root, text="Category = ", font=("Calibri", 15), bg="#e3fffd")
-	precisionDisplay = Label(root, text="Precision Rate = % ", font=("Calibri", 15), bg="#e3fffd")
-	recallDisplay = Label(root, text="Recall Rate = % ", font=("Calibri", 15), bg="#e3fffd")
-	exitButtonDisplay = Button(root, text="Exit Program", font=("Calibri", 15), command=root.destroy)
-
-	for text, categoryName in categories:
-		Radiobutton(root, text=text, variable=category, value=categoryName, command=lambda: [retrieveClosestImage(), retrieveImages()], 
-		bg="#e3fffd", activebackground="#ffd3bf", font=("Calibri", 15)).pack(anchor=NW)
-
-	categoryDisplay.pack(anchor=W)
-	precisionDisplay.pack(anchor=W)
-	recallDisplay.pack(anchor=W)
-	exitButtonDisplay.pack(pady=20)
-
-	mainloop()
 main()
