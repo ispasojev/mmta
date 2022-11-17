@@ -564,7 +564,7 @@ def retrieve_images(choice):
 	if choice == '2':
 		category_name = "building"
 		chosenCategory = 3
-		threshold = 0.5
+		threshold = 0.8
 		src_input = cv.imread("building.jpg")
 		print("You choose: %s - building\n" % choice)
 	if choice == '3':
